@@ -1,50 +1,805 @@
 ﻿<!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="utf-8" />
+    <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - CRYPTIDCARE</title>
-    <script type="importmap"></script>
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/CRYPTIDCARE.styles.css" asp-append-version="true" />
+    <title>CRYPTIDCARE — @ViewData["Title"]</title>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Inter:wght@300;400;500;600&family=Cinzel+Decorative:wght@400;700&display=swap" rel="stylesheet" />
+
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+
+    <style>
+            /* ═══════════════════════════════════════════
+                       DESIGN TOKENS
+                    ═══════════════════════════════════════════ */
+            :root {
+                --void: #08080d;
+                --abyss: #10101a;
+                --cavern: #16162a;
+                --crypt: #1e1e38;
+                --ritual: #2a1a4a;
+                --arcane: #7b2d8b;
+                --arcane-glow: #a040c0;
+                --hellfire: #c84b31;
+                --hellfire-glow: #e05a3a;
+                --teal: #4ecdc4;
+                --teal-dim: #2d8a84;
+                --ghost: #f0e6ff;
+                --spirit: #b8a8d8;
+                --shade: #6a5a8a;
+                --sidebar-w: 260px;
+                --topbar-h: 64px;
+                --radius: 10px;
+                --radius-lg: 16px;
+                --transition: 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+
+            /* ═══════════════════════════════════════════
+                       RESET & BASE
+                    ═══════════════════════════════════════════ */
+            *, *::before, *::after {
+                box-sizing: border-box;
+                margin: 0;
+                padding: 0;
+            }
+
+            body {
+                font-family: 'Inter', sans-serif;
+                background-color: var(--void);
+                color: var(--ghost);
+                min-height: 100vh;
+                overflow-x: hidden;
+                position: relative;
+            }
+
+                /* Animated void texture overlay */
+                body::before {
+                    content: '';
+                    position: fixed;
+                    inset: 0;
+                    background-image: radial-gradient(ellipse 80% 60% at 20% 10%, rgba(123,45,139,0.12) 0%, transparent 60%), radial-gradient(ellipse 60% 80% at 80% 90%, rgba(200,75,49,0.08) 0%, transparent 60%), url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+                    pointer-events: none;
+                    z-index: 0;
+                }
+
+            a {
+                color: inherit;
+                text-decoration: none;
+            }
+
+            button {
+                cursor: pointer;
+                border: none;
+                background: none;
+                font-family: inherit;
+            }
+
+            /* ═══════════════════════════════════════════
+                       LAYOUT SHELL
+                    ═══════════════════════════════════════════ */
+            .shell {
+                display: flex;
+                min-height: 100vh;
+                position: relative;
+                z-index: 1;
+            }
+
+            /* ═══════════════════════════════════════════
+                       SIDEBAR
+                    ═══════════════════════════════════════════ */
+            .sidebar {
+                width: var(--sidebar-w);
+                min-height: 100vh;
+                background: linear-gradient(180deg, #12102a 0%, #0e0c1e 60%, #100816 100%);
+                border-right: 1px solid rgba(123,45,139,0.25);
+                display: flex;
+                flex-direction: column;
+                position: fixed;
+                left: 0;
+                top: 0;
+                bottom: 0;
+                z-index: 100;
+                transition: transform var(--transition), width var(--transition);
+                overflow: hidden;
+            }
+
+                /* Rune glow strip on right edge */
+                .sidebar::after {
+                    content: '';
+                    position: absolute;
+                    top: 0;
+                    right: 0;
+                    bottom: 0;
+                    width: 1px;
+                    background: linear-gradient(180deg, transparent 0%, rgba(123,45,139,0.6) 20%, rgba(78,205,196,0.4) 50%, rgba(123,45,139,0.6) 80%, transparent 100%);
+                    animation: runeGlow 4s ease-in-out infinite alternate;
+                }
+
+            @@keyframes runeGlow {
+                from {
+                    opacity: 0.4;
+                }
+
+                to {
+                    opacity: 1;
+                }
+            }
+
+            /* Brand area */
+            .sidebar-brand {
+                padding: 0 20px;
+                height: var(--topbar-h);
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                border-bottom: 1px solid rgba(123,45,139,0.2);
+                flex-shrink: 0;
+            }
+
+            .brand-sigil {
+                width: 36px;
+                height: 36px;
+                background: linear-gradient(135deg, var(--arcane) 0%, var(--hellfire) 100%);
+                border-radius: 8px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 18px;
+                box-shadow: 0 0 16px rgba(123,45,139,0.5), 0 0 32px rgba(123,45,139,0.2);
+                flex-shrink: 0;
+            }
+
+            .brand-text {
+                display: flex;
+                flex-direction: column;
+                overflow: hidden;
+            }
+
+            .brand-name {
+                font-family: 'Cinzel', serif;
+                font-weight: 700;
+                font-size: 13px;
+                letter-spacing: 0.12em;
+                color: var(--ghost);
+                white-space: nowrap;
+                line-height: 1.2;
+            }
+
+            .brand-sub {
+                font-size: 9px;
+                letter-spacing: 0.2em;
+                color: var(--teal);
+                text-transform: uppercase;
+                white-space: nowrap;
+            }
+
+            /* Nav */
+            .sidebar-nav {
+                flex: 1;
+                padding: 20px 12px;
+                overflow-y: auto;
+                overflow-x: hidden;
+            }
+
+                .sidebar-nav::-webkit-scrollbar {
+                    width: 3px;
+                }
+
+                .sidebar-nav::-webkit-scrollbar-track {
+                    background: transparent;
+                }
+
+                .sidebar-nav::-webkit-scrollbar-thumb {
+                    background: var(--arcane);
+                    border-radius: 2px;
+                }
+
+            .nav-label {
+                font-size: 9px;
+                letter-spacing: 0.25em;
+                text-transform: uppercase;
+                color: var(--shade);
+                padding: 0 12px 8px;
+                margin-top: 8px;
+            }
+
+            .nav-item {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                padding: 11px 14px;
+                border-radius: var(--radius);
+                color: var(--spirit);
+                font-size: 13.5px;
+                font-weight: 500;
+                letter-spacing: 0.02em;
+                position: relative;
+                transition: all var(--transition);
+                white-space: nowrap;
+                margin-bottom: 3px;
+                overflow: hidden;
+            }
+
+                .nav-item::before {
+                    content: '';
+                    position: absolute;
+                    inset: 0;
+                    background: linear-gradient(90deg, rgba(123,45,139,0.15) 0%, transparent 100%);
+                    opacity: 0;
+                    transition: opacity var(--transition);
+                    border-radius: var(--radius);
+                }
+
+                .nav-item:hover {
+                    color: var(--ghost);
+                }
+
+                    .nav-item:hover::before {
+                        opacity: 1;
+                    }
+
+                    .nav-item:hover .nav-icon {
+                        color: var(--teal);
+                        transform: scale(1.1);
+                    }
+
+                .nav-item.active {
+                    color: var(--ghost);
+                    background: linear-gradient(90deg, rgba(123,45,139,0.3) 0%, rgba(123,45,139,0.08) 100%);
+                    box-shadow: inset 3px 0 0 var(--arcane-glow), 0 0 12px rgba(123,45,139,0.15);
+                }
+
+                    .nav-item.active .nav-icon {
+                        color: var(--arcane-glow);
+                    }
+
+                    /* Rune pulse on active */
+                    .nav-item.active::after {
+                        content: '';
+                        position: absolute;
+                        left: 0;
+                        top: 50%;
+                        transform: translateY(-50%);
+                        width: 3px;
+                        height: 60%;
+                        background: linear-gradient(180deg, var(--teal), var(--arcane-glow));
+                        border-radius: 0 2px 2px 0;
+                        animation: runePulse 2s ease-in-out infinite;
+                    }
+
+            @@keyframes runePulse {
+                0%, 100% {
+                    box-shadow: 0 0 4px var(--arcane-glow);
+                    opacity: 1;
+                }
+
+                50% {
+                    box-shadow: 0 0 10px var(--arcane-glow), 0 0 20px var(--arcane);
+                    opacity: 0.8;
+                }
+            }
+
+            .nav-icon {
+                font-size: 17px;
+                flex-shrink: 0;
+                width: 20px;
+                text-align: center;
+                transition: all var(--transition);
+            }
+
+            .nav-spacer {
+                height: 1px;
+                background: linear-gradient(90deg, transparent, rgba(123,45,139,0.2), transparent);
+                margin: 10px 12px;
+            }
+
+            /* Logout — at bottom, different styling */
+            .sidebar-footer-nav {
+                padding: 12px;
+                border-top: 1px solid rgba(123,45,139,0.15);
+            }
+
+            .nav-item.logout {
+                color: #7a6a7a;
+                background: rgba(0,0,0,0.3);
+                border: 1px solid rgba(200,75,49,0.1);
+            }
+
+                .nav-item.logout:hover {
+                    color: var(--hellfire);
+                    background: rgba(200,75,49,0.08);
+                    border-color: rgba(200,75,49,0.3);
+                }
+
+                    .nav-item.logout:hover .nav-icon {
+                        color: var(--hellfire);
+                    }
+
+            /* ═══════════════════════════════════════════
+                       MAIN AREA
+                    ═══════════════════════════════════════════ */
+            .main-wrap {
+                margin-left: var(--sidebar-w);
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                min-height: 100vh;
+                transition: margin-left var(--transition);
+            }
+
+            /* ═══════════════════════════════════════════
+                       TOPBAR
+                    ═══════════════════════════════════════════ */
+            .topbar {
+                height: var(--topbar-h);
+                background: rgba(10,10,20,0.85);
+                backdrop-filter: blur(16px);
+                -webkit-backdrop-filter: blur(16px);
+                border-bottom: 1px solid rgba(123,45,139,0.18);
+                display: flex;
+                align-items: center;
+                gap: 16px;
+                padding: 0 24px;
+                position: sticky;
+                top: 0;
+                z-index: 50;
+            }
+
+            .sidebar-toggle {
+                width: 36px;
+                height: 36px;
+                border-radius: 8px;
+                color: var(--spirit);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 18px;
+                transition: all var(--transition);
+                flex-shrink: 0;
+            }
+
+                .sidebar-toggle:hover {
+                    background: rgba(123,45,139,0.2);
+                    color: var(--ghost);
+                }
+
+            .topbar-search {
+                flex: 1;
+                max-width: 440px;
+                position: relative;
+                display: flex;
+                align-items: center;
+            }
+
+            .topbar-search-icon {
+                position: absolute;
+                left: 12px;
+                color: var(--shade);
+                font-size: 15px;
+                pointer-events: none;
+            }
+
+            .topbar-search input {
+                width: 100%;
+                background: rgba(255,255,255,0.04);
+                border: 1px solid rgba(123,45,139,0.2);
+                border-radius: 40px;
+                padding: 9px 16px 9px 38px;
+                font-family: 'Inter', sans-serif;
+                font-size: 13px;
+                color: var(--ghost);
+                outline: none;
+                transition: all var(--transition);
+            }
+
+                .topbar-search input::placeholder {
+                    color: var(--shade);
+                }
+
+                .topbar-search input:focus {
+                    background: rgba(123,45,139,0.08);
+                    border-color: rgba(123,45,139,0.5);
+                    box-shadow: 0 0 0 3px rgba(123,45,139,0.12);
+                }
+
+            .topbar-right {
+                margin-left: auto;
+                display: flex;
+                align-items: center;
+                gap: 12px;
+            }
+
+            .topbar-btn {
+                width: 36px;
+                height: 36px;
+                border-radius: 8px;
+                color: var(--spirit);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 17px;
+                transition: all var(--transition);
+                position: relative;
+            }
+
+                .topbar-btn:hover {
+                    background: rgba(123,45,139,0.2);
+                    color: var(--ghost);
+                }
+
+            .topbar-badge {
+                position: absolute;
+                top: 4px;
+                right: 4px;
+                width: 8px;
+                height: 8px;
+                background: var(--hellfire);
+                border-radius: 50%;
+                border: 2px solid var(--void);
+                box-shadow: 0 0 6px var(--hellfire);
+            }
+
+            .topbar-avatar {
+                width: 34px;
+                height: 34px;
+                border-radius: 50%;
+                background: linear-gradient(135deg, var(--arcane) 0%, var(--hellfire) 100%);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-family: 'Cinzel', serif;
+                font-size: 13px;
+                font-weight: 700;
+                color: var(--ghost);
+                cursor: pointer;
+                border: 2px solid rgba(123,45,139,0.4);
+                transition: all var(--transition);
+                flex-shrink: 0;
+            }
+
+                .topbar-avatar:hover {
+                    border-color: var(--arcane-glow);
+                    box-shadow: 0 0 12px rgba(123,45,139,0.4);
+                }
+
+            .topbar-divider {
+                width: 1px;
+                height: 20px;
+                background: rgba(123,45,139,0.25);
+            }
+
+            /* ═══════════════════════════════════════════
+                       PAGE BODY
+                    ═══════════════════════════════════════════ */
+            .page-body {
+                flex: 1;
+                padding: 32px;
+                position: relative;
+            }
+
+            /* ═══════════════════════════════════════════
+                       FOOTER
+                    ═══════════════════════════════════════════ */
+            .footer {
+                padding: 16px 32px;
+                border-top: 1px solid rgba(123,45,139,0.12);
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                font-size: 11.5px;
+                color: var(--shade);
+                letter-spacing: 0.03em;
+                background: rgba(8,8,13,0.6);
+            }
+
+            .footer-brand {
+                font-family: 'Cinzel', serif;
+                font-size: 10px;
+                letter-spacing: 0.15em;
+                color: var(--spirit);
+            }
+
+            .footer a {
+                color: var(--teal);
+                transition: color var(--transition);
+            }
+
+                .footer a:hover {
+                    color: var(--arcane-glow);
+                }
+
+            .footer-rune {
+                font-size: 16px;
+                color: var(--arcane);
+                animation: runeFlicker 5s ease-in-out infinite;
+            }
+
+            @@keyframes runeFlicker {
+                0%, 90%, 100% {
+                    opacity: 1;
+                }
+
+                93% {
+                    opacity: 0.3;
+                }
+
+                96% {
+                    opacity: 0.8;
+                }
+            }
+
+            /* ═══════════════════════════════════════════
+                       SIDEBAR COLLAPSED STATE
+                    ═══════════════════════════════════════════ */
+            .shell.sidebar-collapsed .sidebar {
+                width: 64px;
+            }
+
+            .shell.sidebar-collapsed .brand-text,
+            .shell.sidebar-collapsed .nav-item span,
+            .shell.sidebar-collapsed .nav-label,
+            .shell.sidebar-collapsed .brand-sub {
+                display: none;
+            }
+
+            .shell.sidebar-collapsed .main-wrap {
+                margin-left: 64px;
+            }
+
+            .shell.sidebar-collapsed .sidebar-brand {
+                padding: 0;
+                justify-content: center;
+            }
+
+            .shell.sidebar-collapsed .nav-item {
+                justify-content: center;
+                padding: 11px;
+            }
+
+                .shell.sidebar-collapsed .nav-item .nav-icon {
+                    width: auto;
+                }
+
+            .shell.sidebar-collapsed .nav-spacer {
+                margin: 8px 10px;
+            }
+
+            /* ═══════════════════════════════════════════
+                       SCROLLBAR
+                    ═══════════════════════════════════════════ */
+            ::-webkit-scrollbar {
+                width: 6px;
+                height: 6px;
+            }
+
+            ::-webkit-scrollbar-track {
+                background: var(--void);
+            }
+
+            ::-webkit-scrollbar-thumb {
+                background: rgba(123,45,139,0.35);
+                border-radius: 3px;
+            }
+
+                ::-webkit-scrollbar-thumb:hover {
+                    background: var(--arcane);
+                }
+
+            /* ═══════════════════════════════════════════
+                       ALERT / TOAST
+                    ═══════════════════════════════════════════ */
+            .toast-container {
+                position: fixed;
+                bottom: 24px;
+                right: 24px;
+                z-index: 9999;
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .toast {
+                background: var(--crypt);
+                border: 1px solid rgba(123,45,139,0.3);
+                border-radius: var(--radius);
+                padding: 14px 18px;
+                font-size: 13px;
+                color: var(--ghost);
+                box-shadow: 0 8px 32px rgba(0,0,0,0.5), 0 0 0 1px rgba(123,45,139,0.1);
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                animation: toastIn 0.3s ease;
+                max-width: 320px;
+            }
+
+            @@keyframes toastIn {
+                from {
+                    opacity: 0;
+                    transform: translateX(20px);
+                }
+
+                to {
+                    opacity: 1;
+                    transform: translateX(0);
+                }
+            }
+
+            .toast.success {
+                border-left: 3px solid var(--teal);
+            }
+
+            .toast.error {
+                border-left: 3px solid var(--hellfire);
+            }
+    </style>
+
+    @await RenderSectionAsync("Styles", required: false)
 </head>
 <body>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">CRYPTIDCARE</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-                        </li>
-                    </ul>
+
+    <div class="shell" id="shell">
+
+        <!-- ══════════════════ SIDEBAR ══════════════════ -->
+        <aside class="sidebar" id="sidebar">
+
+            <div class="sidebar-brand">
+                <div class="brand-sigil">🜏</div>
+                <div class="brand-text">
+                    <span class="brand-name">CRYPTIDCARE</span>
+                    <span class="brand-sub">Containment Division</span>
                 </div>
             </div>
-        </nav>
-    </header>
-    <div class="container">
-        <main role="main" class="pb-3">
-            @RenderBody()
-        </main>
-    </div>
 
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2026 - CRYPTIDCARE - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+            <nav class="sidebar-nav">
+                <div class="nav-label">Control Panel</div>
+
+                <a href="/Dashboard" class="nav-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "Dashboard" ? "active" : "")">
+                    <i class="bi bi-grid-1x2-fill nav-icon"></i>
+                    <span>Dashboard</span>
+                </a>
+
+                <a href="/Cryptid" class="nav-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "Cryptid" ? "active" : "")">
+                    <i class="bi bi-eye-fill nav-icon"></i>
+                    <span>Cryptids</span>
+                </a>
+
+                <a href="/Enclosure" class="nav-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "Enclosure" ? "active" : "")">
+                    <i class="bi bi-shield-lock-fill nav-icon"></i>
+                    <span>Enclosures</span>
+                </a>
+
+                <div class="nav-spacer"></div>
+                <div class="nav-label">Operations</div>
+
+                <a href="/FeedingSchedule" class="nav-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "FeedingSchedule" ? "active" : "")">
+                    <i class="bi bi-droplet-fill nav-icon"></i>
+                    <span>Feeding Schedules</span>
+                </a>
+
+                <a href="/Keeper" class="nav-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "Keeper" ? "active" : "")">
+                    <i class="bi bi-person-badge-fill nav-icon"></i>
+                    <span>Keepers</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer-nav">
+                <a href="/Account/Logout" class="nav-item logout">
+                    <i class="bi bi-box-arrow-left nav-icon"></i>
+                    <span>Logout</span>
+                </a>
+            </div>
+
+        </aside>
+        <!-- ══ /SIDEBAR ══ -->
+        <!-- ══════════════════ MAIN ══════════════════ -->
+        <div class="main-wrap" id="mainWrap">
+
+            <!-- TOPBAR -->
+            <header class="topbar">
+                <button class="sidebar-toggle" id="sidebarToggle" title="Toggle sidebar">
+                    <i class="bi bi-list"></i>
+                </button>
+
+                <div class="topbar-search">
+                    <i class="bi bi-search topbar-search-icon"></i>
+                    <input type="text" placeholder="Search cryptids, keepers, enclosures…" id="globalSearch" />
+                </div>
+
+                <div class="topbar-right">
+                    <button class="topbar-btn" title="Alerts">
+                        <i class="bi bi-bell-fill"></i>
+                        <span class="topbar-badge"></span>
+                    </button>
+
+                    <div class="topbar-divider"></div>
+
+                    <div class="topbar-avatar" title="Admin">A</div>
+                </div>
+            </header>
+            <!-- /TOPBAR -->
+            <!-- PAGE CONTENT -->
+            <main class="page-body">
+                @RenderBody()
+            </main>
+            <!-- /PAGE CONTENT -->
+            <!-- FOOTER -->
+            <footer class="footer">
+                <span class="footer-brand">CRYPTIDCARE &nbsp;·&nbsp; Containment Division</span>
+                <span class="footer-rune">🜏</span>
+                <span>
+                    © @DateTime.Now.Year &nbsp;·&nbsp; Built by
+                    <a href="https://github.com/zaruyashar" target="_blank" rel="noopener">zaruyashar</a>
+                </span>
+            </footer>
+            <!-- /FOOTER -->
+
         </div>
-    </footer>
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/js/site.js" asp-append-version="true"></script>
+        <!-- ══ /MAIN ══ -->
+
+    </div><!-- /shell -->
+    <!-- Toast container (for TempData messages) -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script>
+            // ── Sidebar toggle ──────────────────────────────
+            const shell  = document.getElementById('shell');
+            const toggle = document.getElementById('sidebarToggle');
+
+            // Persist state
+            if (localStorage.getItem('sidebar-collapsed') === 'true') {
+                shell.classList.add('sidebar-collapsed');
+            }
+
+            toggle.addEventListener('click', () => {
+                shell.classList.toggle('sidebar-collapsed');
+                localStorage.setItem('sidebar-collapsed',
+                    shell.classList.contains('sidebar-collapsed'));
+            });
+
+            // ── Active nav from current URL ──────────────────
+            const currentPath = window.location.pathname.toLowerCase();
+            document.querySelectorAll('.nav-item').forEach(item => {
+                const href = item.getAttribute('href')?.toLowerCase();
+                if (href && href !== '/' && currentPath.startsWith(href)) {
+                    item.classList.add('active');
+                }
+            });
+
+            // ── Global search (wire up as needed) ──────────
+            document.getElementById('globalSearch')?.addEventListener('keydown', e => {
+                if (e.key === 'Enter') {
+                    const q = e.target.value.trim();
+                    if (q) window.location.href = `/Search?q=${encodeURIComponent(q)}`;
+                }
+            });
+
+            // ── Toast helper ────────────────────────────────
+            function showToast(message, type = 'success') {
+                const container = document.getElementById('toastContainer');
+                const t = document.createElement('div');
+                t.className = `toast ${type}`;
+                t.innerHTML = `<i class="bi bi-${type === 'success' ? 'check-circle-fill' : 'exclamation-triangle-fill'}"></i> ${message}`;
+                container.appendChild(t);
+                setTimeout(() => t.remove(), 3500);
+            }
+
+            // Show TempData toasts if present
+            @if (TempData["Success"] != null)
+            {
+                    <text>showToast('@TempData["Success"]', 'success');</text>
+            }
+            @if (TempData["Error"] != null)
+            {
+                    <text>showToast('@TempData["Error"]', 'error');</text>
+            }
+    </script>
+
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

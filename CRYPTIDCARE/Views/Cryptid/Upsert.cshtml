@@ -1,0 +1,238 @@
+﻿@model CRYPTIDCARE.Models.Cryptid
+
+@{
+    ViewData["Title"] = Model.Id == 0 ? "Contain New Cryptid" : "Edit Cryptid";
+    bool isEdit = Model.Id != 0;
+    string formTitle = isEdit ? $"Amend Record — {Model.Nickname}" : "New Containment Entry";
+    string formSub = isEdit ? "Update the entity's classified file." : "Register a new entity in the containment system.";
+    string backUrl = "/Cryptid";
+    string entityIcon = isEdit ? "✎" : "🜏";
+}
+
+<link rel="stylesheet" href="~/css/crud-upsert.css" />
+
+<div class="upsert-header">
+    <div class="header-icon">@entityIcon</div>
+    <div class="header-text">
+        <div class="breadcrumb">
+            <a href="@backUrl">Cryptids</a>
+            <i class="bi bi-chevron-right"></i>
+            <span>@(isEdit ? "Edit" : "New")</span>
+        </div>
+        <h1 class="form-title">@formTitle</h1>
+        <p class="form-subtitle">@formSub</p>
+    </div>
+</div>
+
+<form asp-action="Upsert" method="post" id="upsertForm">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="Id" />
+
+    <div class="upsert-layout">
+        <div class="form-card">
+            <div class="form-card-header">
+                <i class="bi bi-file-text-fill"></i>
+                Entity Details
+            </div>
+            <div class="form-card-body">
+                <div class="form-section-label">Basic Information</div>
+                <div class="field-grid">
+                    <div class="field-group">
+                        <label class="field-label" asp-for="Nickname">
+                            Nickname <span class="required">*</span>
+                        </label>
+                        <input class="field-input @(ViewData.ModelState["Nickname"]?.Errors.Any() == true ? "error" : "")"
+                               asp-for="Nickname"
+                               placeholder="e.g. Fluffy, Shadow, Bubbles…" />
+                        <div class="field-error">
+                            <i class="bi bi-exclamation-circle-fill"></i>
+                            <span asp-validation-for="Nickname"></span>
+                        </div>
+                    </div>
+
+                    <div class="field-group">
+                        <label class="field-label" asp-for="SpeciesType">
+                            Species Type <span class="required">*</span>
+                        </label>
+                        <input class="field-input @(ViewData.ModelState["SpeciesType"]?.Errors.Any() == true ? "error" : "")"
+                               asp-for="SpeciesType"
+                               placeholder="e.g. Cerberus, Kraken, Kelpie…" />
+                        <div class="field-error">
+                            <i class="bi bi-exclamation-circle-fill"></i>
+                            <span asp-validation-for="SpeciesType"></span>
+                        </div>
+                    </div>
+
+                    <div class="field-group">
+                        <label class="field-label" asp-for="EnclosureId">
+                            Assigned Enclosure <span class="required">*</span>
+                        </label>
+                        <select class="field-select @(ViewData.ModelState["EnclosureId"]?.Errors.Any() == true ? "error" : "")"
+                                asp-for="EnclosureId">
+                            <option value="">— Select Enclosure —</option>
+                            @if (ViewBag.Enclosures != null)
+                            {
+                                foreach (var enc in ViewBag.Enclosures)
+                                {
+                                    <option value="@enc.Value" selected="@(enc.Value == Model.EnclosureId.ToString())">
+                                        @enc.Text
+                                    </option>
+                                }
+                            }
+                            else
+                            {
+                                for (int i = 1; i <= 10; i++)
+                                {
+                                    <option value="@i">Enclosure #@i</option>
+                                }
+                            }
+                        </select>
+                        <div class="field-error">
+                            <i class="bi bi-exclamation-circle-fill"></i>
+                            <span asp-validation-for="EnclosureId"></span>
+                        </div>
+                    </div>
+
+                    <div class="field-group full">
+                        <label class="field-label" asp-for="ImageUrl">
+                            Image Path / URL
+                        </label>
+                        <input class="field-input"
+                               asp-for="ImageUrl"
+                               placeholder="/images/cryptids/filename.jpg"
+                               id="imageUrlInput"
+                               oninput="document.getElementById('imagePreview').src = this.value;" />
+                        <div class="field-error">
+                            <i class="bi bi-exclamation-circle-fill"></i>
+                            <span asp-validation-for="ImageUrl"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="side-stack">
+            <div class="side-panel">
+                <div class="side-panel-header">
+                    <i class="bi bi-image-fill"></i>
+                    Entity Image
+                </div>
+                <div class="side-panel-body">
+                    <div class="image-preview-wrap">
+                        <img src="@Model.ImageUrl" alt="Preview"
+                             class="image-preview"
+                             id="imagePreview"
+                             style="display: @(!string.IsNullOrEmpty(Model?.ImageUrl) ? "block" : "none");"
+                             onload="this.style.display='block'; document.getElementById('imagePlaceholder').style.display='none';"
+                             onerror="this.style.display='none'; document.getElementById('imagePlaceholder').style.display='flex';" />
+                        <div class="image-placeholder" id="imagePlaceholder"
+                             style="display: @(string.IsNullOrEmpty(Model?.ImageUrl) ? "flex" : "none")">
+                            <i class="bi bi-image"></i>
+                            <span>Enter an image path above</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="side-panel">
+                <div class="side-panel-header">
+                    <i class="bi bi-floppy-fill"></i>
+                    @(isEdit ? "Update Record" : "Save Record")
+                </div>
+                <div class="side-panel-body">
+                    <div class="publish-actions">
+                        <button type="submit" class="btn-save">
+                            <i class="bi bi-@(isEdit ? "check-lg" : "plus-lg")"></i>
+                            @(isEdit ? "Update Entry" : "Add to Registry")
+                        </button>
+                        <button type="button" class="btn-cancel-back" onclick="window.location.href='/Cryptid'">
+                            <i class="bi bi-x-lg"></i>
+                            Discard Changes
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            @if (isEdit)
+            {
+                <div class="side-panel">
+                    <div class="side-panel-header">
+                        <i class="bi bi-info-circle-fill"></i>
+                        Record Info
+                    </div>
+                    <div class="side-panel-body">
+                        <div class="info-list">
+                            <div class="info-row">
+                                <span class="info-key">Registry ID</span>
+                                <span class="info-val">#@Model.Id</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-key">Species</span>
+                                <span class="info-val">@Model.SpeciesType</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-key">Enclosure</span>
+                                <span class="info-val">#@Model.EnclosureId</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="danger-zone">
+                    <div class="danger-header">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                        Restricted Actions
+                    </div>
+                    <div class="danger-body">
+                        <p class="danger-text">
+                            Permanently expunge <strong>@Model.Nickname</strong> from the containment registry.
+                            This action cannot be undone.
+                        </p>
+                        <button type="button" class="btn-delete-danger" onclick="confirmExpunge(@Model.Id, '@Model.Nickname', '/Cryptid/Delete')">
+                            <i class="bi bi-trash3-fill"></i>
+                            Expunge Record
+                        </button>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</form>
+
+<div class="modal-overlay" id="expungeModal"
+     style="position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);
+    z-index:1000;display:flex;align-items:center;justify-content:center;
+    opacity:0;pointer-events:none;transition:opacity 0.2s;">
+    <div style="background:linear-gradient(180deg,#1e1e38 0%,#16162a 100%);
+        border:1px solid rgba(200,75,49,0.3);border-radius:16px;padding:32px;
+        max-width:400px;width:90%;text-align:center;
+        box-shadow:0 24px 64px rgba(0,0,0,0.6);
+        transform:scale(0.95);transition:transform 0.2s;" id="expungeBox">
+        <span style="font-size:38px;margin-bottom:16px;display:block;">☠️</span>
+        <div style="font-family:'Cinzel',serif;font-size:18px;font-weight:700;color:#f0e6ff;margin-bottom:10px;">
+            Expunge from Registry?
+        </div>
+        <p style="font-size:13px;color:#6a5a8a;line-height:1.6;margin-bottom:24px;" id="expungeText"></p>
+        <div style="display:flex;gap:12px;justify-content:center;">
+            <button onclick="closeExpunge()"
+                    style="padding:10px 22px;border-radius:10px;background:rgba(255,255,255,0.05);
+                border:1px solid rgba(123,45,139,0.2);color:#6a5a8a;font-size:13px;
+                cursor:pointer;font-family:'Inter',sans-serif;">
+                Cancel
+            </button>
+            <a id="expungeLink"
+               style="padding:10px 22px;border-radius:10px;
+                background:linear-gradient(135deg,#c84b31,#a03020);
+                color:#fff;font-size:13px;font-weight:600;
+                cursor:pointer;font-family:'Inter',sans-serif;text-decoration:none;
+                box-shadow:0 4px 14px rgba(200,75,49,0.35);display:inline-block;">
+                Expunge
+            </a>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/crud-upsert.js"></script>
+}

@@ -1,0 +1,189 @@
+﻿@model CRYPTIDCARE.Models.Enclosure
+
+@{
+    ViewData["Title"] = Model.Id == 0 ? "Build New Enclosure" : "Edit Enclosure";
+    bool isEdit = Model.Id != 0;
+    string formTitle = isEdit ? $"Amend Enclosure — #{Model.Id}" : "New Enclosure Form";
+    string formSub = isEdit ? "Update the habitat parameters." : "Register a new containment zone.";
+    string backUrl = "/Enclosure";
+    string entityIcon = isEdit ? "✎" : "🛡️";
+}
+
+<link rel="stylesheet" href="~/css/crud-upsert.css" />
+
+<div class="upsert-header">
+    <div class="header-icon">@entityIcon</div>
+    <div class="header-text">
+        <div class="breadcrumb">
+            <a href="@backUrl">Enclosures</a>
+            <i class="bi bi-chevron-right"></i>
+            <span>@(isEdit ? "Edit" : "New")</span>
+        </div>
+        <h1 class="form-title">@formTitle</h1>
+        <p class="form-subtitle">@formSub</p>
+    </div>
+</div>
+
+<form asp-action="Upsert" method="post" id="upsertForm">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="Id" />
+
+    <div class="upsert-layout">
+        <div class="form-card">
+            <div class="form-card-header">
+                <i class="bi bi-file-text-fill"></i>
+                Enclosure Details
+            </div>
+            <div class="form-card-body">
+                <div class="form-section-label">Habitat Parameters</div>
+                <div class="field-grid">
+
+                    <div class="field-group full">
+                        <label class="field-label" asp-for="BiomeType">
+                            Biome Type <span class="required">*</span>
+                        </label>
+                        <input class="field-input @(ViewData.ModelState["BiomeType"]?.Errors.Any() == true ? "error" : "")"
+                               asp-for="BiomeType"
+                               placeholder="e.g. Volcanic Ash Pit, Deep Ethereal Water…" />
+                        <div class="field-error">
+                            <i class="bi bi-exclamation-circle-fill"></i>
+                            <span asp-validation-for="BiomeType"></span>
+                        </div>
+                    </div>
+
+                    <div class="field-group">
+                        <label class="field-label" asp-for="MaxCapacity">
+                            Max Capacity <span class="required">*</span>
+                        </label>
+                        <input class="field-input @(ViewData.ModelState["MaxCapacity"]?.Errors.Any() == true ? "error" : "")"
+                               asp-for="MaxCapacity"
+                               type="number" min="1"
+                               placeholder="e.g. 5" />
+                        <div class="field-error">
+                            <i class="bi bi-exclamation-circle-fill"></i>
+                            <span asp-validation-for="MaxCapacity"></span>
+                        </div>
+                    </div>
+
+                    <div class="field-group">
+                        <label class="field-label">
+                            Containment Status
+                        </label>
+                        <input type="checkbox" asp-for="ContainmentBreach" class="hidden-check" id="breachToggle" />
+                        <label for="breachToggle" class="field-toggle">
+                            <div class="toggle-switch"></div>
+                            <div>
+                                <div class="toggle-label">Active Breach</div>
+                                <div class="toggle-desc">Toggle if enclosure is compromised</div>
+                            </div>
+                        </label>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <div class="side-stack">
+
+            <div class="side-panel">
+                <div class="side-panel-header">
+                    <i class="bi bi-floppy-fill"></i>
+                    @(isEdit ? "Update Record" : "Save Record")
+                </div>
+                <div class="side-panel-body">
+                    <div class="publish-actions">
+                        <button type="submit" class="btn-save">
+                            <i class="bi bi-@(isEdit ? "check-lg" : "plus-lg")"></i>
+                            @(isEdit ? "Update Enclosure" : "Build Enclosure")
+                        </button>
+                        <button type="button" class="btn-cancel-back" onclick="window.location.href='/Enclosure'">
+                            <i class="bi bi-x-lg"></i>
+                            Discard Changes
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            @if (isEdit)
+            {
+                <div class="side-panel">
+                    <div class="side-panel-header">
+                        <i class="bi bi-info-circle-fill"></i>
+                        Record Info
+                    </div>
+                    <div class="side-panel-body">
+                        <div class="info-list">
+                            <div class="info-row">
+                                <span class="info-key">Registry ID</span>
+                                <span class="info-val">#@Model.Id</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-key">Capacity Limit</span>
+                                <span class="info-val">@Model.MaxCapacity</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-key">Status</span>
+                                <span class="info-val">@(Model.ContainmentBreach ? "BREACH" : "SECURE")</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="danger-zone">
+                    <div class="danger-header">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                        Restricted Actions
+                    </div>
+                    <div class="danger-body">
+                        <p class="danger-text">
+                            Permanently demolish <strong>Enclosure #@Model.Id</strong>.
+                            This action cannot be undone.
+                        </p>
+                        <button type="button" class="btn-delete-danger" onclick="confirmExpunge(@Model.Id, 'Enclosure #@Model.Id', '/Enclosure/Delete', 'Make sure it is empty.')">
+                            <i class="bi bi-trash3-fill"></i>
+                            Decommission
+                        </button>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</form>
+
+<div class="modal-overlay" id="expungeModal"
+     style="position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);
+    z-index:1000;display:flex;align-items:center;justify-content:center;
+    opacity:0;pointer-events:none;transition:opacity 0.2s;">
+    <div style="background:linear-gradient(180deg,#1e1e38 0%,#16162a 100%);
+        border:1px solid rgba(200,75,49,0.3);border-radius:16px;padding:32px;
+        max-width:400px;width:90%;text-align:center;
+        box-shadow:0 24px 64px rgba(0,0,0,0.6);
+        transform:scale(0.95);transition:transform 0.2s;" id="expungeBox">
+        <span style="font-size:38px;margin-bottom:16px;display:block;">☠️</span>
+        <div style="font-family:'Cinzel',serif;font-size:18px;font-weight:700;color:#f0e6ff;margin-bottom:10px;">
+            Decommission Enclosure?
+        </div>
+        <p style="font-size:13px;color:#6a5a8a;line-height:1.6;margin-bottom:24px;" id="expungeText"></p>
+        <div style="display:flex;gap:12px;justify-content:center;">
+            <button type="button" onclick="closeExpunge()"
+                    style="padding:10px 22px;border-radius:10px;background:rgba(255,255,255,0.05);
+                border:1px solid rgba(123,45,139,0.2);color:#6a5a8a;font-size:13px;
+                cursor:pointer;font-family:'Inter',sans-serif;">
+                Cancel
+            </button>
+            <a id="expungeLink"
+               style="padding:10px 22px;border-radius:10px;
+                background:linear-gradient(135deg,#c84b31,#a03020);
+                color:#fff;font-size:13px;font-weight:600;
+                cursor:pointer;font-family:'Inter',sans-serif;text-decoration:none;
+                box-shadow:0 4px 14px rgba(200,75,49,0.35);display:inline-block;">
+                Decommission
+            </a>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/crud-upsert.js"></script>
+}

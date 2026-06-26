@@ -1,0 +1,189 @@
+﻿@model CRYPTIDCARE.Models.FeedingSchedule
+
+@{
+    ViewData["Title"] = Model.Id == 0 ? "Add Feeding Schedule" : "Edit Feeding Schedule";
+    bool isEdit = Model.Id != 0;
+    string formTitle = isEdit ? $"Amend Schedule — #{Model.Id}" : "New Feeding Schedule";
+    string formSub = isEdit ? "Update dietary assignments." : "Register a new dietary assignment.";
+    string backUrl = "/FeedingSchedule";
+    string entityIcon = isEdit ? "✎" : "🥩";
+}
+
+<link rel="stylesheet" href="~/css/crud-upsert.css" />
+
+<div class="upsert-header">
+    <div class="header-icon">@entityIcon</div>
+    <div class="header-text">
+        <div class="breadcrumb">
+            <a href="@backUrl">Feeding Schedules</a>
+            <i class="bi bi-chevron-right"></i>
+            <span>@(isEdit ? "Edit" : "New")</span>
+        </div>
+        <h1 class="form-title">@formTitle</h1>
+        <p class="form-subtitle">@formSub</p>
+    </div>
+</div>
+
+<form asp-action="Upsert" method="post" id="upsertForm">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="Id" />
+
+    <div class="upsert-layout">
+        <div class="form-card">
+            <div class="form-card-header">
+                <i class="bi bi-file-text-fill"></i>
+                Schedule Details
+            </div>
+            <div class="form-card-body">
+                <div class="form-section-label">Assignments</div>
+                <div class="field-grid">
+
+                    <div class="field-group">
+                        <label class="field-label" asp-for="CryptidId">
+                            Assigned Cryptid <span class="required">*</span>
+                        </label>
+                        <select class="field-select @(ViewData.ModelState["CryptidId"]?.Errors.Any() == true ? "error" : "")"
+                                asp-for="CryptidId">
+                            <option value="">— Select Cryptid —</option>
+                            @if (ViewBag.Cryptids != null)
+                            {
+                                foreach (var cryptid in ViewBag.Cryptids)
+                                {
+                                    <option value="@cryptid.Value" selected="@(cryptid.Value == Model.CryptidId.ToString())">
+                                        @cryptid.Text
+                                    </option>
+                                }
+                            }
+                            else
+                            {
+                                for (int i = 1; i <= 10; i++)
+                                {
+                                    <option value="@i">Cryptid #@i</option>
+                                }
+                            }
+                        </select>
+                        <div class="field-error">
+                            <i class="bi bi-exclamation-circle-fill"></i>
+                            <span asp-validation-for="CryptidId"></span>
+                        </div>
+                    </div>
+
+                    <div class="field-group">
+                        <label class="field-label" asp-for="KeeperId">
+                            Assigned Keeper <span class="required">*</span>
+                        </label>
+                        <select class="field-select @(ViewData.ModelState["KeeperId"]?.Errors.Any() == true ? "error" : "")"
+                                asp-for="KeeperId">
+                            <option value="">— Select Keeper —</option>
+                            @if (ViewBag.Keepers != null)
+                            {
+                                foreach (var keeper in ViewBag.Keepers)
+                                {
+                                    <option value="@keeper.Value" selected="@(keeper.Value == Model.KeeperId.ToString())">
+                                        @keeper.Text
+                                    </option>
+                                }
+                            }
+                            else
+                            {
+                                for (int i = 1; i <= 10; i++)
+                                {
+                                    <option value="@i">Keeper #@i</option>
+                                }
+                            }
+                        </select>
+                        <div class="field-error">
+                            <i class="bi bi-exclamation-circle-fill"></i>
+                            <span asp-validation-for="KeeperId"></span>
+                        </div>
+                    </div>
+
+                    <div class="field-group full">
+                        <label class="field-label" asp-for="DietaryItems">
+                            Dietary Items <span class="required">*</span>
+                        </label>
+                        <textarea class="field-textarea @(ViewData.ModelState["DietaryItems"]?.Errors.Any() == true ? "error" : "")"
+                                  asp-for="DietaryItems"
+                                  placeholder="e.g. 100 lbs of Raw Beef, Brimstone..."></textarea>
+                        <div class="field-error">
+                            <i class="bi bi-exclamation-circle-fill"></i>
+                            <span asp-validation-for="DietaryItems"></span>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <div class="side-stack">
+
+            <div class="side-panel">
+                <div class="side-panel-header">
+                    <i class="bi bi-floppy-fill"></i>
+                    @(isEdit ? "Update Record" : "Save Record")
+                </div>
+                <div class="side-panel-body">
+                    <div class="publish-actions">
+                        <button type="submit" class="btn-save">
+                            <i class="bi bi-@(isEdit ? "check-lg" : "plus-lg")"></i>
+                            @(isEdit ? "Update Schedule" : "Add Schedule")
+                        </button>
+                        <button type="button" class="btn-cancel-back" onclick="window.location.href='/FeedingSchedule'">
+                            <i class="bi bi-x-lg"></i>
+                            Discard Changes
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            @if (isEdit)
+            {
+                <div class="side-panel">
+                    <div class="side-panel-header">
+                        <i class="bi bi-info-circle-fill"></i>
+                        Record Info
+                    </div>
+                    <div class="side-panel-body">
+                        <div class="info-list">
+                            <div class="info-row">
+                                <span class="info-key">Registry ID</span>
+                                <span class="info-val">#@Model.Id</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-key">Cryptid</span>
+                                <span class="info-val">#@Model.CryptidId</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-key">Keeper</span>
+                                <span class="info-val">#@Model.KeeperId</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="danger-zone">
+                    <div class="danger-header">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                        Restricted Actions
+                    </div>
+                    <div class="danger-body">
+                        <p class="danger-text">
+                            Permanently expunge <strong>Schedule #@Model.Id</strong> from the registry.
+                            This action cannot be undone.
+                        </p>
+                        <button type="button" class="btn-delete-danger"
+                                onclick="confirmExpunge(@Model.Id, 'Schedule #@Model.Id', '/FeedingSchedule/Delete', '')">
+                            <i class="bi bi-trash3-fill"></i>
+                            Expunge Record
+                        </button>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/crud-upsert.js"></script>
+}

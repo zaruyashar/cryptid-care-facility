@@ -1,0 +1,779 @@
+﻿@* ═══════════════════════════════════════════════════════════
+   CRYPTIDCARE — DASHBOARD PAGE
+   Route: /Dashboard  |  Controller: DashboardController
+   ═══════════════════════════════════════════════════════════ *@
+
+@{
+    ViewData["Title"] = "Dashboard";
+
+    @* ── Pull these from ViewBag in your DashboardController ──
+       ViewBag.TotalCryptids         = 17
+       ViewBag.TotalEnclosures       = 10
+       ViewBag.TotalKeepers          = 10
+       ViewBag.TotalFeedings         = 12
+       ViewBag.ContainmentBreach     = 1   (enclosures where ContainmentStatus = true)
+       ViewBag.RecentCryptids        = list of last 5 cryptids added
+       ViewBag.MostDangerousKeeper   = keeper with highest HazardPayRate
+       ViewBag.SpeciesDistribution   = Dictionary<string,int> (species → count)
+       ViewBag.EnclosureCapacities   = list of { BiomeType, MaxCapacity, CurrentOccupancy }
+    ── *@
+}
+
+<style>
+    /* ═══════════════════════════════════════════
+       DASHBOARD GREETING
+    ═══════════════════════════════════════════ */
+    .dash-greeting {
+        margin-bottom: 28px;
+    }
+
+    .greeting-eyebrow {
+        font-size: 11px;
+        letter-spacing: 0.25em;
+        text-transform: uppercase;
+        color: #4ecdc4;
+        margin-bottom: 6px;
+    }
+
+    .greeting-title {
+        font-family: 'Cinzel', serif;
+        font-size: 28px;
+        font-weight: 700;
+        color: #f0e6ff;
+        letter-spacing: 0.04em;
+        line-height: 1.1;
+        margin-bottom: 8px;
+    }
+
+    .greeting-sub {
+        font-size: 13.5px;
+        color: #6a5a8a;
+        max-width: 520px;
+    }
+
+    .greeting-sub strong { color: #c84b31; }
+
+    /* ═══════════════════════════════════════════
+       STAT CARDS GRID
+    ═══════════════════════════════════════════ */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
+        margin-bottom: 28px;
+    }
+
+    .stat-card {
+        background: linear-gradient(160deg, rgba(26,26,48,0.95) 0%, rgba(16,16,26,0.98) 100%);
+        border: 1px solid rgba(123,45,139,0.18);
+        border-radius: 14px;
+        padding: 22px 22px 18px;
+        position: relative;
+        overflow: hidden;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 40px rgba(0,0,0,0.4), 0 0 0 1px rgba(123,45,139,0.2);
+    }
+
+    /* Glow tint per card */
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: -30px; right: -30px;
+        width: 100px; height: 100px;
+        border-radius: 50%;
+        opacity: 0.15;
+    }
+
+    .stat-card.purple::before  { background: #7b2d8b; }
+    .stat-card.teal::before    { background: #4ecdc4; }
+    .stat-card.red::before     { background: #c84b31; }
+    .stat-card.yellow::before  { background: #d4a843; }
+    .stat-card.red { border-color: rgba(200,75,49,0.3); }
+
+    .stat-icon {
+        width: 40px; height: 40px;
+        border-radius: 10px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 18px;
+        margin-bottom: 14px;
+    }
+
+    .stat-icon.purple { background: rgba(123,45,139,0.2); color: #a040c0; }
+    .stat-icon.teal   { background: rgba(78,205,196,0.15); color: #4ecdc4; }
+    .stat-icon.red    { background: rgba(200,75,49,0.15); color: #c84b31; }
+    .stat-icon.yellow { background: rgba(212,168,67,0.15); color: #d4a843; }
+
+    .stat-value {
+        font-family: 'Cinzel', serif;
+        font-size: 36px;
+        font-weight: 700;
+        color: #f0e6ff;
+        line-height: 1;
+        margin-bottom: 6px;
+        letter-spacing: -0.01em;
+    }
+
+    .stat-label {
+        font-size: 12px;
+        color: #6a5a8a;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }
+
+    .stat-delta {
+        position: absolute;
+        top: 20px; right: 20px;
+        font-size: 11px;
+        font-weight: 600;
+        padding: 3px 8px;
+        border-radius: 20px;
+        letter-spacing: 0.04em;
+    }
+
+    .stat-delta.warning {
+        background: rgba(200,75,49,0.15);
+        color: #c84b31;
+        border: 1px solid rgba(200,75,49,0.3);
+        animation: breachPulse 2s ease-in-out infinite;
+    }
+
+    @@keyframes breachPulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+
+    /* ═══════════════════════════════════════════
+       DASHBOARD GRID
+    ═══════════════════════════════════════════ */
+    .dash-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        grid-template-rows: auto auto;
+        gap: 20px;
+    }
+
+    @@media (max-width: 1100px) {
+        .dash-grid { grid-template-columns: 1fr 1fr; }
+    }
+
+    @@media (max-width: 720px) {
+        .dash-grid { grid-template-columns: 1fr; }
+    }
+
+    /* Panel base */
+    .panel {
+        background: linear-gradient(180deg, rgba(26,26,48,0.92) 0%, rgba(14,14,22,0.98) 100%);
+        border: 1px solid rgba(123,45,139,0.18);
+        border-radius: 16px;
+        overflow: hidden;
+    }
+
+    .panel.span-2 { grid-column: span 2; }
+
+    .panel-header {
+        padding: 18px 20px 14px;
+        border-bottom: 1px solid rgba(123,45,139,0.1);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .panel-title {
+        font-family: 'Cinzel', serif;
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: #6a5a8a;
+        display: flex; align-items: center; gap: 8px;
+    }
+
+    .panel-title i { color: #7b2d8b; }
+
+    .panel-action {
+        font-size: 11.5px;
+        color: #4ecdc4;
+        text-decoration: none;
+        transition: color 0.2s;
+    }
+
+    .panel-action:hover { color: #7b2d8b; }
+
+    .panel-body { padding: 16px 20px 20px; }
+
+    /* ── Species donut chart ── */
+    .chart-wrap {
+        display: flex;
+        align-items: center;
+        gap: 24px;
+        flex-wrap: wrap;
+    }
+
+    .donut-svg { flex-shrink: 0; filter: drop-shadow(0 0 16px rgba(123,45,139,0.3)); }
+
+    .legend {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        min-width: 120px;
+    }
+
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 12px;
+        color: #b8a8d8;
+    }
+
+    .legend-dot {
+        width: 8px; height: 8px;
+        border-radius: 50%;
+        flex-shrink: 0;
+    }
+
+    .legend-count {
+        margin-left: auto;
+        font-family: 'Cinzel', serif;
+        font-size: 12px;
+        color: #f0e6ff;
+    }
+
+    /* ── Recent cryptids ── */
+    .recent-list { display: flex; flex-direction: column; gap: 2px; }
+
+    .recent-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 12px;
+        border-radius: 10px;
+        transition: background 0.15s;
+        cursor: default;
+    }
+
+    .recent-item:hover { background: rgba(123,45,139,0.1); }
+
+    .recent-avatar {
+        width: 38px; height: 38px;
+        border-radius: 9px;
+        object-fit: cover;
+        border: 1px solid rgba(123,45,139,0.25);
+        background: rgba(123,45,139,0.1);
+        flex-shrink: 0;
+    }
+
+    .recent-avatar-placeholder {
+        width: 38px; height: 38px;
+        border-radius: 9px;
+        background: linear-gradient(135deg, rgba(123,45,139,0.25) 0%, rgba(78,205,196,0.1) 100%);
+        border: 1px solid rgba(123,45,139,0.2);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 16px;
+        flex-shrink: 0;
+    }
+
+    .recent-info { flex: 1; min-width: 0; }
+
+    .recent-name {
+        font-size: 13.5px;
+        font-weight: 500;
+        color: #f0e6ff;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .recent-species {
+        font-size: 11.5px;
+        color: #6a5a8a;
+    }
+
+    .recent-enclosure {
+        font-size: 11px;
+        color: #3a2a5a;
+        background: rgba(123,45,139,0.12);
+        padding: 2px 8px;
+        border-radius: 20px;
+        border: 1px solid rgba(123,45,139,0.15);
+        flex-shrink: 0;
+    }
+
+    /* ── Enclosure capacity bars ── */
+    .capacity-list { display: flex; flex-direction: column; gap: 14px; }
+
+    .capacity-item {}
+
+    .capacity-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        margin-bottom: 6px;
+    }
+
+    .capacity-biome {
+        font-size: 12.5px;
+        color: #b8a8d8;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 160px;
+    }
+
+    .capacity-count {
+        font-family: 'Cinzel', serif;
+        font-size: 11px;
+        color: #6a5a8a;
+        flex-shrink: 0;
+    }
+
+    .capacity-bar {
+        height: 6px;
+        background: rgba(255,255,255,0.05);
+        border-radius: 3px;
+        overflow: hidden;
+    }
+
+    .capacity-fill {
+        height: 100%;
+        border-radius: 3px;
+        transition: width 0.8s cubic-bezier(0.4,0,0.2,1);
+        background: linear-gradient(90deg, #4ecdc4, #7b2d8b);
+    }
+
+    .capacity-fill.near-full {
+        background: linear-gradient(90deg, #c84b31, #7b2d8b);
+    }
+
+    /* ── Keeper Hazard Leaderboard ── */
+    .keeper-list { display: flex; flex-direction: column; gap: 2px; }
+
+    .keeper-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 12px;
+        border-radius: 10px;
+        transition: background 0.15s;
+    }
+
+    .keeper-item:hover { background: rgba(123,45,139,0.08); }
+
+    .keeper-rank {
+        font-family: 'Cinzel', serif;
+        font-size: 11px;
+        color: #3a2a5a;
+        width: 20px;
+        text-align: center;
+        flex-shrink: 0;
+    }
+
+    .keeper-rank.gold   { color: #d4a843; }
+    .keeper-rank.silver { color: #8a8a9a; }
+    .keeper-rank.bronze { color: #a0522d; }
+
+    .keeper-avatar {
+        width: 34px; height: 34px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--ritual,#2a1a4a) 0%, var(--crypt,#1e1e38) 100%);
+        display: flex; align-items: center; justify-content: center;
+        font-family: 'Cinzel', serif;
+        font-size: 12px;
+        font-weight: 700;
+        color: #b8a8d8;
+        border: 1px solid rgba(123,45,139,0.25);
+        flex-shrink: 0;
+    }
+
+    .keeper-info { flex: 1; }
+
+    .keeper-name {
+        font-size: 13px;
+        font-weight: 500;
+        color: #f0e6ff;
+    }
+
+    .keeper-specialty {
+        font-size: 11.5px;
+        color: #6a5a8a;
+    }
+
+    .hazard-rate {
+        font-family: 'Cinzel', serif;
+        font-size: 14px;
+        font-weight: 700;
+        color: #c84b31;
+        flex-shrink: 0;
+    }
+
+    .hazard-unit { font-size: 10px; color: #6a5a8a; font-family: 'Inter', sans-serif; font-weight: 400; }
+
+    /* ── Alert banner ── */
+    .alert-banner {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        background: rgba(200,75,49,0.07);
+        border: 1px solid rgba(200,75,49,0.25);
+        border-radius: 12px;
+        padding: 14px 18px;
+        margin-bottom: 24px;
+        animation: alertPulse 3s ease-in-out infinite;
+    }
+
+    @@keyframes alertPulse {
+        0%, 100% { border-color: rgba(200,75,49,0.25); }
+        50% { border-color: rgba(200,75,49,0.55); }
+    }
+
+    .alert-icon { font-size: 22px; flex-shrink: 0; }
+
+    .alert-text { flex: 1; }
+
+    .alert-title {
+        font-family: 'Cinzel', serif;
+        font-size: 13px;
+        font-weight: 700;
+        color: #c84b31;
+        letter-spacing: 0.06em;
+        margin-bottom: 2px;
+    }
+
+    .alert-sub { font-size: 12px; color: #7a5a5a; }
+
+    .alert-action {
+        font-size: 12px;
+        color: #c84b31;
+        border: 1px solid rgba(200,75,49,0.3);
+        padding: 6px 14px;
+        border-radius: 8px;
+        text-decoration: none;
+        transition: all 0.2s;
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+
+    .alert-action:hover {
+        background: rgba(200,75,49,0.15);
+        color: #e05a3a;
+    }
+</style>
+
+<!-- ══════════════════ GREETING ══════════════════ -->
+<div class="dash-greeting">
+    <div class="greeting-eyebrow">⚑ &nbsp; Facility Status — Operational</div>
+    <h1 class="greeting-title">Command Overview</h1>
+    <p class="greeting-sub">
+        All containment systems nominal. <strong>@(ViewBag.ContainmentBreach ?? 0) breach alert(s)</strong> require immediate attention.
+        Monitor, manage, and contain.
+    </p>
+</div>
+
+@* ── Containment breach alert (conditional) ── *@
+@if ((ViewBag.ContainmentBreach ?? 0) > 0)
+{
+    <div class="alert-banner">
+        <span class="alert-icon">⚠️</span>
+        <div class="alert-text">
+            <div class="alert-title">Containment Breach Detected</div>
+            <div class="alert-sub">@(ViewBag.ContainmentBreach) enclosure(s) reporting active breach status. Immediate response required.</div>
+        </div>
+        <a href="/Enclosure" class="alert-action">View Enclosures</a>
+    </div>
+}
+
+<!-- ══════════════════ STAT CARDS ══════════════════ -->
+<div class="stats-grid">
+
+    <div class="stat-card purple">
+        <div class="stat-icon purple"><i class="bi bi-eye-fill"></i></div>
+        <div class="stat-value">@(ViewBag.TotalCryptids ?? 0)</div>
+        <div class="stat-label">Cryptids Contained</div>
+    </div>
+
+    <div class="stat-card teal">
+        <div class="stat-icon teal"><i class="bi bi-shield-lock-fill"></i></div>
+        <div class="stat-value">@(ViewBag.TotalEnclosures ?? 0)</div>
+        <div class="stat-label">Active Enclosures</div>
+    </div>
+
+    <div class="stat-card yellow">
+        <div class="stat-icon yellow"><i class="bi bi-person-badge-fill"></i></div>
+        <div class="stat-value">@(ViewBag.TotalKeepers ?? 0)</div>
+        <div class="stat-label">Keepers on Duty</div>
+    </div>
+
+    <div class="stat-card @((ViewBag.ContainmentBreach ?? 0) > 0 ? "red" : "purple")">
+        @if ((ViewBag.ContainmentBreach ?? 0) > 0)
+        {
+            <div class="stat-delta warning">⚠ BREACH</div>
+        }
+        <div class="stat-icon @((ViewBag.ContainmentBreach ?? 0) > 0 ? "red" : "purple")">
+            <i class="bi bi-droplet-fill"></i>
+        </div>
+        <div class="stat-value">@(ViewBag.TotalFeedings ?? 0)</div>
+        <div class="stat-label">Feeding Schedules</div>
+    </div>
+
+</div>
+
+<!-- ══════════════════ DASHBOARD PANELS ══════════════════ -->
+<div class="dash-grid">
+
+    <!-- ── Species Distribution (Donut) ── -->
+    <div class="panel">
+        <div class="panel-header">
+            <span class="panel-title"><i class="bi bi-pie-chart-fill"></i> Species Distribution</span>
+        </div>
+        <div class="panel-body">
+            <div class="chart-wrap">
+                <!-- SVG Donut — generated dynamically via JS below -->
+                <svg class="donut-svg" id="donutChart" width="140" height="140" viewBox="0 0 140 140"></svg>
+                <div class="legend" id="donutLegend"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Recent Cryptids ── -->
+    <div class="panel">
+        <div class="panel-header">
+            <span class="panel-title"><i class="bi bi-clock-fill"></i> Recently Added</span>
+            <a href="/Cryptid" class="panel-action">View all →</a>
+        </div>
+        <div class="panel-body">
+            <div class="recent-list">
+                @if (ViewBag.RecentCryptids != null)
+                {
+                    foreach (var c in ViewBag.RecentCryptids)
+                    {
+                        <div class="recent-item">
+                            @if (!string.IsNullOrEmpty(c.ImageUrl))
+                            {
+                                <img src="@c.ImageUrl" alt="@c.Nickname" class="recent-avatar" />
+                            }
+                            else
+                            {
+                                <div class="recent-avatar-placeholder">🜏</div>
+                            }
+                            <div class="recent-info">
+                                <div class="recent-name">@c.Nickname</div>
+                                <div class="recent-species">@c.SpeciesType</div>
+                            </div>
+                            <div class="recent-enclosure">Enc. #@c.EnclosureId</div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    @* Static sample while ViewBag not wired *@
+                    var samples = new[] {
+                        ("Fluffy", "Cerberus", "1", "/images/cryptids/fluffy.jpg"),
+                        ("Shadow", "Mothman", "3", "/images/cryptids/mothman.jpg"),
+                        ("Bubbles", "Kraken", "2", "/images/cryptids/kraken.jpg"),
+                        ("Frostbite", "Wendigo", "5", "/images/cryptids/wendigo.jpg"),
+                        ("Null", "Void Stalker", "10", "/images/cryptids/void.jpg"),
+                    };
+                    foreach (var (nick, species, enc, img) in samples)
+                    {
+                        <div class="recent-item">
+                            <div class="recent-avatar-placeholder">🜏</div>
+                            <div class="recent-info">
+                                <div class="recent-name">@nick</div>
+                                <div class="recent-species">@species</div>
+                            </div>
+                            <div class="recent-enclosure">Enc. #@enc</div>
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Enclosure Capacities ── -->
+    <div class="panel">
+        <div class="panel-header">
+            <span class="panel-title"><i class="bi bi-bar-chart-fill"></i> Enclosure Capacity</span>
+            <a href="/Enclosure" class="panel-action">Manage →</a>
+        </div>
+        <div class="panel-body">
+            <div class="capacity-list" id="capacityList">
+                @* Static sample — replace with ViewBag.EnclosureCapacities loop *@
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Keeper Hazard Leaderboard ── -->
+    <div class="panel">
+        <div class="panel-header">
+            <span class="panel-title"><i class="bi bi-trophy-fill"></i> Hazard Pay Leaderboard</span>
+            <a href="/Keeper" class="panel-action">View all →</a>
+        </div>
+        <div class="panel-body">
+            <div class="keeper-list">
+                @if (ViewBag.TopKeepers != null)
+                {
+                    int rank = 1;
+                    foreach (var k in ViewBag.TopKeepers)
+                    {
+                        string rankClass = rank == 1 ? "gold" : rank == 2 ? "silver" : rank == 3 ? "bronze" : "";
+                        <div class="keeper-item">
+                            <span class="keeper-rank @rankClass">@rank</span>
+                            <div class="keeper-avatar">@k.FullName[0]</div>
+                            <div class="keeper-info">
+                                <div class="keeper-name">@k.FullName</div>
+                                <div class="keeper-specialty">@k.Specialty</div>
+                            </div>
+                            <div class="hazard-rate">$@k.HazardPayRate<span class="hazard-unit">/hr</span></div>
+                        </div>
+                        rank++;
+                    }
+                }
+                else
+                {
+                    @* Static sample *@
+                    var keepers = new[] {
+                        (1, "John Constantine", "Demonologist",    50, "gold"),
+                        (2, "Geralt of Rivia",  "Monster Hunter",  45, "silver"),
+                        (3, "Abr. Van Helsing", "Vampiric Expert", 36, "bronze"),
+                        (4, "Elara Vance",       "Arcane Vet",     25, ""),
+                        (5, "Newt Scamander",    "Magizoologist",  20, ""),
+                    };
+                    foreach (var (r, name, spec, rate, rankCls) in keepers)
+                    {
+                        <div class="keeper-item">
+                            <span class="keeper-rank @rankCls">@r</span>
+                            <div class="keeper-avatar">@name[0]</div>
+                            <div class="keeper-info">
+                                <div class="keeper-name">@name</div>
+                                <div class="keeper-specialty">@spec</div>
+                            </div>
+                            <div class="hazard-rate">$@rate<span class="hazard-unit">/hr</span></div>
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+
+</div>
+
+@section Scripts {
+    <script>
+        // ── Donut Chart ──────────────────────────────────────────────────────
+        const speciesData = @Html.Raw(
+                    ViewBag.SpeciesDistribution != null
+                            ? System.Text.Json.JsonSerializer.Serialize(ViewBag.SpeciesDistribution)
+                            : "{\"Cerberus\":1,\"Mothman\":1,\"Kraken\":1,\"Wendigo\":1,\"Chupacabra\":1,\"Banshee\":1,\"Basilisk\":1,\"Yeti\":1,\"Jackalope\":1,\"Kelpie\":1,\"Minotaur\":1,\"Thunderbird\":1,\"Nemean Lion\":1,\"Kitsune\":1,\"Bunyip\":1,\"Hellhound\":1,\"Void Stalker\":1}"
+            );
+
+        const palette = [
+            '#7b2d8b','#4ecdc4','#c84b31','#d4a843','#5a8b2d',
+            '#2d5a8b','#8b2d5a','#4e8bcd','#cd4e8b','#8bcd4e',
+        ];
+
+        const svg     = document.getElementById('donutChart');
+        const legend  = document.getElementById('donutLegend');
+        const entries = Object.entries(speciesData);
+        const total   = entries.reduce((s,[,v]) => s+v, 0);
+        const cx = 70, cy = 70, r = 52, inner = 32;
+
+        function polarToXY(angle, radius) {
+            return {
+                x: cx + radius * Math.cos(angle - Math.PI/2),
+                y: cy + radius * Math.sin(angle - Math.PI/2),
+            };
+        }
+
+        let startAngle = 0;
+        const gap = 0.03;
+
+        entries.forEach(([species, count], i) => {
+            const fraction = count / total;
+            const angle    = fraction * 2 * Math.PI - gap;
+            const endAngle = startAngle + angle;
+            const color    = palette[i % palette.length];
+            const large    = angle > Math.PI ? 1 : 0;
+
+            const s = polarToXY(startAngle + gap/2, r);
+            const e = polarToXY(endAngle, r);
+            const si = polarToXY(startAngle + gap/2, inner);
+            const ei = polarToXY(endAngle, inner);
+
+            const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+            path.setAttribute('d',
+                `M ${s.x} ${s.y} A ${r} ${r} 0 ${large} 1 ${e.x} ${e.y}
+                 L ${ei.x} ${ei.y} A ${inner} ${inner} 0 ${large} 0 ${si.x} ${si.y} Z`
+            );
+            path.setAttribute('fill', color);
+            path.setAttribute('opacity', '0.85');
+            path.style.transition = 'opacity 0.2s';
+            path.addEventListener('mouseenter', () => path.setAttribute('opacity','1'));
+            path.addEventListener('mouseleave', () => path.setAttribute('opacity','0.85'));
+            svg.appendChild(path);
+
+            startAngle = endAngle + gap;
+
+            // Legend (only first 7)
+            if (i < 7) {
+                const li = document.createElement('div');
+                li.className = 'legend-item';
+                li.innerHTML = `
+                    <span class="legend-dot" style="background:${color}"></span>
+                    <span>${species}</span>
+                    <span class="legend-count">${count}</span>
+                `;
+                legend.appendChild(li);
+            }
+        });
+
+        // Center label
+        const text = document.createElementNS('http://www.w3.org/2000/svg','text');
+        text.setAttribute('x', cx); text.setAttribute('y', cy - 6);
+        text.setAttribute('text-anchor','middle');
+        text.setAttribute('fill','#f0e6ff');
+        text.setAttribute('font-family','Cinzel,serif');
+        text.setAttribute('font-size','20');
+        text.setAttribute('font-weight','700');
+        text.textContent = total;
+        svg.appendChild(text);
+
+        const sub = document.createElementNS('http://www.w3.org/2000/svg','text');
+        sub.setAttribute('x', cx); sub.setAttribute('y', cy + 10);
+        sub.setAttribute('text-anchor','middle');
+        sub.setAttribute('fill','#6a5a8a');
+        sub.setAttribute('font-size','8');
+        sub.setAttribute('letter-spacing','2');
+        sub.textContent = 'ENTITIES';
+        svg.appendChild(sub);
+
+        // ── Enclosure capacity bars ─────────────────────────────────────────
+        const enclosureData = @Html.Raw(
+                    ViewBag.EnclosureCapacities != null
+                            ? System.Text.Json.JsonSerializer.Serialize(ViewBag.EnclosureCapacities)
+                            : "[{\"BiomeType\":\"Volcanic Ash Pit\",\"MaxCapacity\":5,\"CurrentOccupancy\":2},{\"BiomeType\":\"Deep Ethereal Water\",\"MaxCapacity\":2,\"CurrentOccupancy\":1},{\"BiomeType\":\"Cursed Black Forest\",\"MaxCapacity\":10,\"CurrentOccupancy\":3},{\"BiomeType\":\"Subterranean Crystal Cave\",\"MaxCapacity\":8,\"CurrentOccupancy\":2},{\"BiomeType\":\"Frozen Tundra\",\"MaxCapacity\":4,\"CurrentOccupancy\":2},{\"BiomeType\":\"Toxic Swamp\",\"MaxCapacity\":12,\"CurrentOccupancy\":2}]"
+            );
+
+        const capList = document.getElementById('capacityList');
+        enclosureData.forEach(enc => {
+            const pct = Math.round((enc.CurrentOccupancy / enc.MaxCapacity) * 100);
+            const nearFull = pct >= 80;
+            const el = document.createElement('div');
+            el.className = 'capacity-item';
+            el.innerHTML = `
+                <div class="capacity-header">
+                    <span class="capacity-biome">${enc.BiomeType}</span>
+                    <span class="capacity-count">${enc.CurrentOccupancy ?? 0} / ${enc.MaxCapacity}</span>
+                </div>
+                <div class="capacity-bar">
+                    <div class="capacity-fill ${nearFull ? 'near-full' : ''}" style="width:${pct}%"></div>
+                </div>
+            `;
+            capList.appendChild(el);
+        });
+    </script>
+}
