@@ -1,0 +1,225 @@
+﻿@model CRYPTIDCARE.Models.GlobalSearchResult
+
+@{
+    ViewData["Title"] = "Search Results";
+}
+
+<link rel="stylesheet" href="~/css/crud-list.css" />
+
+<div class="page-header">
+    <div class="page-title-group">
+        <div class="page-title-icon">🔍</div>
+        <div>
+            <h1 class="page-title">Search Results</h1>
+            <p class="page-subtitle">
+                @if (!string.IsNullOrWhiteSpace(Model.SearchQuery))
+                {
+                    <text>Displaying global database matches for "<strong>@Model.SearchQuery</strong>"</text>
+                }
+                else
+                {
+                    <text>Awaiting search parameters.</text>
+                }
+            </p>
+        </div>
+    </div>
+</div>
+
+@if (string.IsNullOrWhiteSpace(Model.SearchQuery))
+{
+    <div class="table-card" style="padding: 60px; text-align: center;">
+        <div style="font-size: 48px; color: #5a4a7a; opacity: 0.4; margin-bottom: 16px;">🔍</div>
+        <div style="font-family: 'Cinzel', serif; font-size: 16px; font-weight: 700; color: #1a0a2e; margin-bottom: 8px;">Enter a Search Term</div>
+        <div style="font-size: 13px; color: #5a4a7a;">Use the top bar to search the facility database.</div>
+    </div>
+}
+else if (!Model.Cryptids.Any() && !Model.Enclosures.Any() && !Model.Keepers.Any() && !Model.FeedingSchedules.Any())
+{
+    <div class="table-card" style="padding: 60px; text-align: center;">
+        <div style="font-size: 48px; color: #5a4a7a; opacity: 0.4; margin-bottom: 16px;">👻</div>
+        <div style="font-family: 'Cinzel', serif; font-size: 16px; font-weight: 700; color: #1a0a2e; margin-bottom: 8px;">No Matches Found</div>
+        <div style="font-size: 13px; color: #5a4a7a;">The void returns nothing for your query.</div>
+    </div>
+}
+else
+{
+    @if (Model.Cryptids.Any())
+    {
+        <div class="table-card" style="margin-bottom: 24px;">
+            <div class="table-toolbar">
+                <div class="toolbar-label" style="font-family: 'Cinzel', serif; font-weight: 700;">Cryptid Matches (@Model.Cryptids.Count())</div>
+            </div>
+            <div style="overflow-x: auto;">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th class="center">Image</th>
+                            <th>Nickname</th>
+                            <th>Species</th>
+                            <th class="center">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.Cryptids)
+                        {
+                            <tr>
+                                <td class="center">
+                                    @if (!string.IsNullOrEmpty(item.ImageUrl))
+                                    {
+                                        <img src="@item.ImageUrl" class="entity-img" />
+                                    }
+                                    else
+                                    {
+                                        <div class="entity-img-placeholder">🜏</div>
+                                    }
+                                </td>
+                                <td><div class="cell-primary">@item.Nickname</div></td>
+                                <td><span class="species-badge">@item.SpeciesType</span></td>
+                                <td class="center">
+                                    <div class="action-group" style="justify-content:center;">
+                                        <a href="/Cryptid/Upsert/@item.Id" class="btn-icon edit" title="Edit"><i class="bi bi-pencil-fill"></i></a>
+                                        <button class="btn-icon delete" title="Delete" onclick="confirmDelete(@item.Id, '@item.Nickname', '/Cryptid/Delete')"><i class="bi bi-trash3-fill"></i></button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+
+    @if (Model.Enclosures.Any())
+    {
+        <div class="table-card" style="margin-bottom: 24px;">
+            <div class="table-toolbar">
+                <div class="toolbar-label" style="font-family: 'Cinzel', serif; font-weight: 700;">Enclosure Matches (@Model.Enclosures.Count())</div>
+            </div>
+            <div style="overflow-x: auto;">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Biome Type</th>
+                            <th>Capacity</th>
+                            <th>Status</th>
+                            <th class="center">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.Enclosures)
+                        {
+                            <tr>
+                                <td><div class="cell-primary">@item.BiomeType</div></td>
+                                <td><div class="cell-primary">@item.MaxCapacity entities</div></td>
+                                <td>
+                                    @if (item.ContainmentBreach)
+                                    {
+                                        <span class="status-badge uncontained"><span class="status-dot"></span> BREACH</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="status-badge contained"><span class="status-dot"></span> SECURE</span>
+                                    }
+                                </td>
+                                <td class="center">
+                                    <div class="action-group" style="justify-content:center;">
+                                        <a href="/Enclosure/Upsert/@item.Id" class="btn-icon edit" title="Edit"><i class="bi bi-pencil-fill"></i></a>
+                                        <button class="btn-icon delete" title="Delete" onclick="confirmDelete(@item.Id, '@item.BiomeType', '/Enclosure/Delete', 'Make sure no entities are currently contained within it.')"><i class="bi bi-trash3-fill"></i></button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+
+    @if (Model.Keepers.Any())
+    {
+        <div class="table-card" style="margin-bottom: 24px;">
+            <div class="table-toolbar">
+                <div class="toolbar-label" style="font-family: 'Cinzel', serif; font-weight: 700;">Keeper Matches (@Model.Keepers.Count())</div>
+            </div>
+            <div style="overflow-x: auto;">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Full Name</th>
+                            <th>Specialty</th>
+                            <th class="center">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.Keepers)
+                        {
+                            <tr>
+                                <td><div class="cell-primary">@item.FullName</div></td>
+                                <td><span class="species-badge" style="color: #0d9488; border-color: rgba(13,148,136,0.3); background: rgba(13,148,136,0.1);">@item.Specialty</span></td>
+                                <td class="center">
+                                    <div class="action-group" style="justify-content:center;">
+                                        <a href="/Keeper/Upsert/@item.Id" class="btn-icon edit" title="Edit"><i class="bi bi-pencil-fill"></i></a>
+                                        <button class="btn-icon delete" title="Delete" onclick="confirmDelete(@item.Id, '@item.FullName', '/Keeper/Delete', 'This will remove the keeper from active duty.')"><i class="bi bi-trash3-fill"></i></button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+
+    @if (Model.FeedingSchedules.Any())
+    {
+        <div class="table-card" style="margin-bottom: 24px;">
+            <div class="table-toolbar">
+                <div class="toolbar-label" style="font-family: 'Cinzel', serif; font-weight: 700;">Feeding Schedule Matches (@Model.FeedingSchedules.Count())</div>
+            </div>
+            <div style="overflow-x: auto;">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Cryptid</th>
+                            <th>Keeper</th>
+                            <th>Dietary Items</th>
+                            <th class="center">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.FeedingSchedules)
+                        {
+                            <tr>
+                                <td><div class="cell-primary">@item.CryptidName</div></td>
+                                <td><div class="cell-primary">@item.KeeperName</div></td>
+                                <td><div class="cell-primary">@item.DietaryItems</div></td>
+                                <td class="center">
+                                    <div class="action-group" style="justify-content:center;">
+                                        <a href="/FeedingSchedule/Upsert/@item.Id" class="btn-icon edit" title="Edit"><i class="bi bi-pencil-fill"></i></a>
+                                        <button class="btn-icon delete" title="Delete" onclick="confirmDelete(@item.Id, 'Schedule #@item.Id', '/FeedingSchedule/Delete', '')"><i class="bi bi-trash3-fill"></i></button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+}
+
+<div class="modal-overlay" id="deleteModal">
+    <div class="modal-box">
+        <span class="modal-icon">☠️</span>
+        <div class="modal-title">Action Required</div>
+        <p class="modal-text" id="deleteModalText"></p>
+        <div class="modal-actions">
+            <button class="btn-cancel" onclick="closeDeleteModal()">Cancel</button>
+            <a class="btn-confirm-delete" id="deleteConfirmLink">Confirm</a>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/crud-list.js"></script>
+}

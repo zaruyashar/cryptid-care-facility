@@ -183,6 +183,18 @@
     </div>
 </form>
 
+<div class="modal-overlay" id="expungeModal">
+    <div class="modal-box" id="expungeBox">
+        <span class="modal-icon">☠️</span>
+        <div class="modal-title">Expunge from Registry?</div>
+        <p class="modal-text" id="expungeText"></p>
+        <div class="modal-actions">
+            <button type="button" class="btn-cancel" onclick="closeExpunge()">Cancel</button>
+            <a id="expungeLink" class="btn-confirm-delete">Expunge</a>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <script src="~/js/crud-upsert.js"></script>

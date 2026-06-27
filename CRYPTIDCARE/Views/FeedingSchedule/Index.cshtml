@@ -135,6 +135,18 @@
 
 </div>
 
+<div class="modal-overlay" id="deleteModal">
+    <div class="modal-box">
+        <span class="modal-icon">☠️</span>
+        <div class="modal-title">Action Required</div>
+        <p class="modal-text" id="deleteModalText"></p>
+        <div class="modal-actions">
+            <button class="btn-cancel" onclick="closeDeleteModal()">Cancel</button>
+            <a class="btn-confirm-delete" id="deleteConfirmLink">Confirm</a>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <script src="~/js/crud-list.js"></script>
     <script>

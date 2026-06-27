@@ -7,7 +7,7 @@
         public int KeeperId { get; set; }
         public string DietaryItems { get; set; }
 
-        public string CryptidName { get; set; } // For data flattening
-        public string KeeperName { get; set; }
+        public string? CryptidName { get; set; } // For data flattening
+        public string? KeeperName { get; set; }
     }
 }

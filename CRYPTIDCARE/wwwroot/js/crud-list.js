@@ -1,9 +1,48 @@
-﻿document.addEventListener("DOMContentLoaded", function () {
+﻿window.confirmDelete = function (id, name, endpoint, customWarning) {
+    const deleteModal = document.getElementById('deleteModal');
+    const linkEl = document.getElementById('deleteConfirmLink');
+    const textEl = document.getElementById('deleteModalText');
+
+    if (linkEl) {
+        linkEl.href = endpoint + '/' + id;
+    }
+
+    if (textEl && customWarning) {
+        textEl.innerHTML = `This action will permanently demolish <strong id="deleteEntityName">${name}</strong>. ${customWarning}`;
+    } else if (textEl) {
+        textEl.innerHTML = `This action will permanently expunge <strong id="deleteEntityName">${name}</strong> from the registry. The void does not return what it takes.`;
+    }
+
+    if (deleteModal) {
+        deleteModal.classList.add('open');
+    }
+};
+
+window.closeDeleteModal = function () {
+    const deleteModal = document.getElementById('deleteModal');
+    if (deleteModal) {
+        deleteModal.classList.remove('open');
+    }
+};
+
+window.exportPdf = function () {
+    window.print();
+};
+
+document.addEventListener("DOMContentLoaded", function () {
+    const deleteModal = document.getElementById('deleteModal');
+    if (deleteModal) {
+        deleteModal.addEventListener('click', e => {
+            if (e.target === deleteModal) window.closeDeleteModal();
+        });
+    }
+
     const tableBody = document.getElementById('tableBody');
     if (!tableBody) return;
 
     let allRows = Array.from(tableBody.querySelectorAll('tr[data-id]'));
-    let pageSize = parseInt(document.getElementById('pageSizeSelect')?.value || 5);
+    let pageSizeSelect = document.getElementById('pageSizeSelect');
+    let pageSize = parseInt(pageSizeSelect?.value || 5);
     let currentPage = 1;
     let totalPages = 1;
 
@@ -24,8 +63,10 @@
 
         const showingFrom = document.getElementById('showingFrom');
         if (showingFrom) showingFrom.textContent = allRows.length ? start + 1 : 0;
+
         const showingTo = document.getElementById('showingTo');
         if (showingTo) showingTo.textContent = end;
+
         const totalCount = document.getElementById('totalCount');
         if (totalCount) totalCount.textContent = allRows.length;
 
@@ -45,20 +86,24 @@
     function renderPageNumbers() {
         const container = document.getElementById('pageNumbers');
         if (!container) return;
+
         container.innerHTML = '';
         const range = 2;
         const pages = new Set();
         pages.add(1);
         pages.add(totalPages);
+
         for (let p = currentPage - range; p <= currentPage + range; p++) {
             if (p >= 1 && p <= totalPages) pages.add(p);
         }
+
         let sorted = Array.from(pages).sort((a, b) => a - b);
         let prev = 0;
+
         sorted.forEach(p => {
             if (p - prev > 1) {
                 const dots = document.createElement('span');
-                dots.style.cssText = 'color:#3a2a5a;padding:0 4px;align-self:center;font-size:12px;';
+                dots.style.cssText = 'color:#3d2b56;padding:0 4px;align-self:center;font-size:12px;';
                 dots.textContent = '…';
                 container.appendChild(dots);
             }
@@ -76,7 +121,6 @@
         window.renderTable();
     };
 
-    const pageSizeSelect = document.getElementById('pageSizeSelect');
     if (pageSizeSelect) {
         pageSizeSelect.addEventListener('change', e => {
             pageSize = parseInt(e.target.value);
@@ -87,6 +131,7 @@
 
     let sortCol = -1;
     let sortAsc = true;
+
     document.querySelectorAll('th.sortable').forEach(th => {
         th.addEventListener('click', () => {
             const col = parseInt(th.dataset.col);
@@ -129,34 +174,4 @@
     });
 
     window.renderTable();
-
-    const deleteModal = document.getElementById('deleteModal');
-    window.confirmDelete = function (id, name, endpoint, customWarning) {
-        const linkEl = document.getElementById('deleteConfirmLink');
-        const textEl = document.getElementById('deleteModalText');
-
-        if (linkEl) linkEl.href = endpoint + '/' + id;
-
-        if (textEl && customWarning) {
-            textEl.innerHTML = `This action will permanently demolish <strong id="deleteEntityName">${name}</strong>. ${customWarning}`;
-        } else if (textEl) {
-            textEl.innerHTML = `This action will permanently expunge <strong id="deleteEntityName">${name}</strong> from the registry. The void does not return what it takes.`;
-        }
-
-        if (deleteModal) deleteModal.classList.add('open');
-    };
-
-    window.closeDeleteModal = function () {
-        if (deleteModal) deleteModal.classList.remove('open');
-    };
-
-    if (deleteModal) {
-        deleteModal.addEventListener('click', e => {
-            if (e.target === deleteModal) window.closeDeleteModal();
-        });
-    }
-
-    window.exportPdf = function () {
-        window.print();
-    };
 });

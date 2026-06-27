@@ -42,6 +42,9 @@ namespace CRYPTIDCARE.Controllers
         [HttpPost]
         public async Task<IActionResult> Upsert(FeedingSchedule schedule)
         {
+            ModelState.Remove("CryptidName");
+            ModelState.Remove("KeeperName");
+
             if (ModelState.IsValid)
             {
                 DynamicParameters param = new DynamicParameters();
@@ -54,6 +57,12 @@ namespace CRYPTIDCARE.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
+            var cryptids = await Context.ListingAsync<Cryptid>("sp_Cryptid_ViewAll");
+            ViewBag.Cryptids = cryptids.Select(c => new SelectListItem { Value = c.Id.ToString(), Text = c.Nickname });
+
+            var keepers = await Context.ListingAsync<Keeper>("sp_Keeper_ViewAll");
+            ViewBag.Keepers = keepers.Select(k => new SelectListItem { Value = k.Id.ToString(), Text = k.FullName });
+
             return View(schedule);
         }
 
@@ -63,6 +72,12 @@ namespace CRYPTIDCARE.Controllers
             param.Add("@Id", id);
 
             await Context.ExecuteReturnAsync("sp_FeedingSchedule_Delete", param);
+
+            string referer = Request.Headers["Referer"].ToString();
+            if (!string.IsNullOrEmpty(referer))
+            {
+                return Redirect(referer);
+            }
 
             return RedirectToAction(nameof(Index));
         }
