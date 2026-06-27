@@ -89,7 +89,7 @@
                             <span class="species-badge">@item.SpeciesType</span>
                         </td>
                         <td>
-                            <div class="cell-primary">Enclosure #@item.EnclosureId</div>
+                            <div class="cell-primary">@(item.EnclosureName ?? $"Enclosure #{item.EnclosureId}")</div>
                         </td>
                         <td class="center">
                             <div class="action-group" style="justify-content:center;">

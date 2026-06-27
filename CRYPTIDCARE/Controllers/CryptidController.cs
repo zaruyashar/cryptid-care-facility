@@ -14,22 +14,20 @@ namespace CRYPTIDCARE.Controllers
 
         public async Task<IActionResult> Upsert(int id = 0)
         {
-            if (id == 0)
+            var enclosures = await Context.ListingAsync<Enclosure>("sp_Enclosure_ViewAll");
+            ViewBag.Enclosures = enclosures.Select(e => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem
             {
-                return View(new Cryptid());
-            }
+                Value = e.Id.ToString(),
+                Text = e.BiomeType
+            });
+
+            if (id == 0) return View(new Cryptid());
 
             DynamicParameters param = new DynamicParameters();
             param.Add("@Id", id);
-
             var cryptid = await Context.GetByIdAsync<Cryptid>("sp_Cryptid_ViewById", param);
 
-            if (cryptid == null)
-            {
-                return NotFound();
-            }
-
-            return View(cryptid);
+            return cryptid == null ? NotFound() : View(cryptid);
         }
 
         [HttpPost]

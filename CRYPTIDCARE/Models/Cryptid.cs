@@ -7,5 +7,6 @@
         public string SpeciesType { get; set; }
         public int EnclosureId { get; set; }
         public string ImageUrl { get; set; }
+        public string? EnclosureName { get; set; }
     }
 }
