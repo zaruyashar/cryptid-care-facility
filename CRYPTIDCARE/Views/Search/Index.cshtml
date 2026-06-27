@@ -76,10 +76,9 @@ else
                                 <td><div class="cell-primary">@item.Nickname</div></td>
                                 <td><span class="species-badge">@item.SpeciesType</span></td>
                                 <td class="center">
-                                    <div class="action-group" style="justify-content:center;">
-                                        <a href="/Cryptid/Upsert/@item.Id" class="btn-icon edit" title="Edit"><i class="bi bi-pencil-fill"></i></a>
-                                        <button class="btn-icon delete" title="Delete" onclick="confirmDelete(@item.Id, '@item.Nickname', '/Cryptid/Delete')"><i class="bi bi-trash3-fill"></i></button>
-                                    </div>
+                                    <a href="/Cryptid/Index" class="btn-pill-view" title="View in Registry">
+                                        View in Registry <i class="bi bi-arrow-right"></i>
+                                    </a>
                                 </td>
                             </tr>
                         }
@@ -122,10 +121,9 @@ else
                                     }
                                 </td>
                                 <td class="center">
-                                    <div class="action-group" style="justify-content:center;">
-                                        <a href="/Enclosure/Upsert/@item.Id" class="btn-icon edit" title="Edit"><i class="bi bi-pencil-fill"></i></a>
-                                        <button class="btn-icon delete" title="Delete" onclick="confirmDelete(@item.Id, '@item.BiomeType', '/Enclosure/Delete', 'Make sure no entities are currently contained within it.')"><i class="bi bi-trash3-fill"></i></button>
-                                    </div>
+                                    <a href="/Enclosure/Index" class="btn-pill-view" title="View in Registry">
+                                        View in Registry <i class="bi bi-arrow-right"></i>
+                                    </a>
                                 </td>
                             </tr>
                         }
@@ -157,10 +155,9 @@ else
                                 <td><div class="cell-primary">@item.FullName</div></td>
                                 <td><span class="species-badge" style="color: #0d9488; border-color: rgba(13,148,136,0.3); background: rgba(13,148,136,0.1);">@item.Specialty</span></td>
                                 <td class="center">
-                                    <div class="action-group" style="justify-content:center;">
-                                        <a href="/Keeper/Upsert/@item.Id" class="btn-icon edit" title="Edit"><i class="bi bi-pencil-fill"></i></a>
-                                        <button class="btn-icon delete" title="Delete" onclick="confirmDelete(@item.Id, '@item.FullName', '/Keeper/Delete', 'This will remove the keeper from active duty.')"><i class="bi bi-trash3-fill"></i></button>
-                                    </div>
+                                    <a href="/Keeper/Index" class="btn-pill-view" title="View in Registry">
+                                        View in Registry <i class="bi bi-arrow-right"></i>
+                                    </a>
                                 </td>
                             </tr>
                         }
@@ -194,10 +191,9 @@ else
                                 <td><div class="cell-primary">@item.KeeperName</div></td>
                                 <td><div class="cell-primary">@item.DietaryItems</div></td>
                                 <td class="center">
-                                    <div class="action-group" style="justify-content:center;">
-                                        <a href="/FeedingSchedule/Upsert/@item.Id" class="btn-icon edit" title="Edit"><i class="bi bi-pencil-fill"></i></a>
-                                        <button class="btn-icon delete" title="Delete" onclick="confirmDelete(@item.Id, 'Schedule #@item.Id', '/FeedingSchedule/Delete', '')"><i class="bi bi-trash3-fill"></i></button>
-                                    </div>
+                                    <a href="/FeedingSchedule/Index" class="btn-pill-view" title="View in Registry">
+                                        View in Registry <i class="bi bi-arrow-right"></i>
+                                    </a>
                                 </td>
                             </tr>
                         }
@@ -206,20 +202,4 @@ else
             </div>
         </div>
     }
-}
-
-<div class="modal-overlay" id="deleteModal">
-    <div class="modal-box">
-        <span class="modal-icon">☠️</span>
-        <div class="modal-title">Action Required</div>
-        <p class="modal-text" id="deleteModalText"></p>
-        <div class="modal-actions">
-            <button class="btn-cancel" onclick="closeDeleteModal()">Cancel</button>
-            <a class="btn-confirm-delete" id="deleteConfirmLink">Confirm</a>
-        </div>
-    </div>
-</div>
-
-@section Scripts {
-    <script src="~/js/crud-list.js"></script>
 }
