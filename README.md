@@ -37,9 +37,10 @@ Developed as part of SoftITo Backend Engineering training as Project #8.
 <img width="3069" height="1917" alt="4" src="https://github.com/user-attachments/assets/c7f9cad3-b340-48ef-b653-ca074bb5da6f" />
 
 
-### Print / PDF Export
+### Print or PDF / XML Export
 *Feeding schedule print view with clean tabular layout, printable via browser or exportable as PDF.*
 <img width="3069" height="1917" alt="3" src="https://github.com/user-attachments/assets/4a381e29-f13e-45da-956d-fd47cc6df63e" />
+<img width="3069" height="1917" alt="9" src="https://github.com/user-attachments/assets/cee6377c-3a8f-41d3-9a41-1a4534028227" />
 
 
 ### Empty Search State
