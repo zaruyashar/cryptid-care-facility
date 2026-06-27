@@ -18,20 +18,20 @@
                        DESIGN TOKENS
                     ═══════════════════════════════════════════ */
             :root {
-                --void: #08080d;
-                --abyss: #10101a;
-                --cavern: #16162a;
-                --crypt: #1e1e38;
+                --void: #f4f0f7;
+                --abyss: #ffffff;
+                --cavern: #f3f0f5;
+                --crypt: #ffffff;
                 --ritual: #2a1a4a;
                 --arcane: #7b2d8b;
                 --arcane-glow: #a040c0;
                 --hellfire: #c84b31;
                 --hellfire-glow: #e05a3a;
-                --teal: #4ecdc4;
-                --teal-dim: #2d8a84;
-                --ghost: #f0e6ff;
-                --spirit: #b8a8d8;
-                --shade: #6a5a8a;
+                --teal: #0d9488;
+                --teal-dim: #14b8a6;
+                --ghost: #0f0518;
+                --spirit: #2a1a4a;
+                --shade: #5a4a7a;
                 --sidebar-w: 260px;
                 --topbar-h: 64px;
                 --radius: 10px;
@@ -62,7 +62,7 @@
                     content: '';
                     position: fixed;
                     inset: 0;
-                    background-image: radial-gradient(ellipse 80% 60% at 20% 10%, rgba(123,45,139,0.12) 0%, transparent 60%), radial-gradient(ellipse 60% 80% at 80% 90%, rgba(200,75,49,0.08) 0%, transparent 60%), url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+                    background-image: radial-gradient(ellipse 80% 60% at 20% 10%, rgba(123,45,139,0.05) 0%, transparent 60%), radial-gradient(ellipse 60% 80% at 80% 90%, rgba(200,75,49,0.03) 0%, transparent 60%);
                     pointer-events: none;
                     z-index: 0;
                 }
@@ -165,7 +165,7 @@
                 font-weight: 700;
                 font-size: 13px;
                 letter-spacing: 0.12em;
-                color: var(--ghost);
+                color: #f0e6ff;
                 white-space: nowrap;
                 line-height: 1.2;
             }
@@ -173,7 +173,7 @@
             .brand-sub {
                 font-size: 9px;
                 letter-spacing: 0.2em;
-                color: var(--teal);
+                color: #4ecdc4;
                 text-transform: uppercase;
                 white-space: nowrap;
             }
@@ -200,10 +200,11 @@
                 }
 
             .nav-label {
-                font-size: 9px;
-                letter-spacing: 0.25em;
+                font-size: 10px;
+                font-weight: 700;
+                letter-spacing: 0.2em;
                 text-transform: uppercase;
-                color: var(--shade);
+                color: #8a7a9a;
                 padding: 0 12px 8px;
                 margin-top: 8px;
             }
@@ -214,7 +215,7 @@
                 gap: 12px;
                 padding: 11px 14px;
                 border-radius: var(--radius);
-                color: var(--spirit);
+                color: #b8a8d8;
                 font-size: 13.5px;
                 font-weight: 500;
                 letter-spacing: 0.02em;
@@ -236,7 +237,8 @@
                 }
 
                 .nav-item:hover {
-                    color: var(--ghost);
+                    color: #ffffff;
+                    background: rgba(123,45,139,0.15);
                 }
 
                     .nav-item:hover::before {
@@ -249,7 +251,7 @@
                     }
 
                 .nav-item.active {
-                    color: var(--ghost);
+                    color: #ffffff;
                     background: linear-gradient(90deg, rgba(123,45,139,0.3) 0%, rgba(123,45,139,0.08) 100%);
                     box-shadow: inset 3px 0 0 var(--arcane-glow), 0 0 12px rgba(123,45,139,0.15);
                 }
@@ -305,7 +307,7 @@
             }
 
             .nav-item.logout {
-                color: #7a6a7a;
+                color: #8a7a9a;
                 background: rgba(0,0,0,0.3);
                 border: 1px solid rgba(200,75,49,0.1);
             }
@@ -354,7 +356,9 @@
                 width: 36px;
                 height: 36px;
                 border-radius: 8px;
-                color: var(--spirit);
+                color: var(--ghost);
+                background: #e9e4ed;
+                border: 1px solid rgba(123,45,139,0.2);
                 display: flex;
                 align-items: center;
                 justify-content: center;
@@ -364,8 +368,8 @@
             }
 
                 .sidebar-toggle:hover {
-                    background: rgba(123,45,139,0.2);
-                    color: var(--ghost);
+                    background: #dcd3e3;
+                    border-color: rgba(123,45,139,0.35);
                 }
 
             .topbar-search {
@@ -386,7 +390,7 @@
 
             .topbar-search input {
                 width: 100%;
-                background: rgba(255,255,255,0.04);
+                background: #f4f0f7;
                 border: 1px solid rgba(123,45,139,0.2);
                 border-radius: 40px;
                 padding: 9px 16px 9px 38px;
@@ -402,9 +406,9 @@
                 }
 
                 .topbar-search input:focus {
-                    background: rgba(123,45,139,0.08);
-                    border-color: rgba(123,45,139,0.5);
-                    box-shadow: 0 0 0 3px rgba(123,45,139,0.12);
+                    background: #ffffff;
+                    border-color: var(--arcane);
+                    box-shadow: 0 0 0 3px rgba(123,45,139,0.1);
                 }
 
             .topbar-right {
@@ -487,19 +491,21 @@
                     ═══════════════════════════════════════════ */
             .footer {
                 padding: 16px 32px;
-                border-top: 1px solid rgba(123,45,139,0.12);
+                border-top: 1px solid rgba(123,45,139,0.15);
                 display: flex;
                 align-items: center;
                 justify-content: space-between;
-                font-size: 11.5px;
+                font-size: 12px;
+                font-weight: 500;
                 color: var(--shade);
                 letter-spacing: 0.03em;
-                background: rgba(8,8,13,0.6);
+                background: var(--abyss);
             }
 
             .footer-brand {
                 font-family: 'Cinzel', serif;
-                font-size: 10px;
+                font-size: 11px;
+                font-weight: 700;
                 letter-spacing: 0.15em;
                 color: var(--spirit);
             }
@@ -712,22 +718,19 @@
                 </div>
 
                 <div class="topbar-right">
-                    <button class="topbar-btn" title="Alerts">
-                        <i class="bi bi-bell-fill"></i>
-                        <span class="topbar-badge"></span>
-                    </button>
-
+                  
                     <div class="topbar-divider"></div>
-
                     <div class="topbar-avatar" title="Admin">A</div>
                 </div>
             </header>
             <!-- /TOPBAR -->
+
             <!-- PAGE CONTENT -->
             <main class="page-body">
                 @RenderBody()
             </main>
             <!-- /PAGE CONTENT -->
+
             <!-- FOOTER -->
             <footer class="footer">
                 <span class="footer-brand">CRYPTIDCARE &nbsp;·&nbsp; Containment Division</span>

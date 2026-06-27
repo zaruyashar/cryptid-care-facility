@@ -1,0 +1,168 @@
+﻿@model CRYPTIDCARE.Models.Keeper
+
+@{
+    ViewData["Title"] = Model.Id == 0 ? "Onboard Keeper" : "Edit Keeper";
+    bool isEdit = Model.Id != 0;
+    string formTitle = isEdit ? $"Amend Record — {Model.FullName}" : "New Personnel File";
+    string formSub = isEdit ? "Update personnel clearance and hazard rates." : "Register a new staff member to the facility.";
+    string backUrl = "/Keeper";
+    string entityIcon = isEdit ? "✎" : "👤";
+}
+
+<link rel="stylesheet" href="~/css/crud-upsert.css" />
+
+<div class="upsert-header">
+    <div class="header-icon">@entityIcon</div>
+    <div class="header-text">
+        <div class="breadcrumb">
+            <a href="@backUrl">Keepers</a>
+            <i class="bi bi-chevron-right"></i>
+            <span>@(isEdit ? "Edit" : "New")</span>
+        </div>
+        <h1 class="form-title">@formTitle</h1>
+        <p class="form-subtitle">@formSub</p>
+    </div>
+</div>
+
+<form asp-action="Upsert" method="post" id="upsertForm">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="Id" />
+
+    <div class="upsert-layout">
+        <div class="form-card">
+            <div class="form-card-header">
+                <i class="bi bi-file-text-fill"></i>
+                Personnel Details
+            </div>
+            <div class="form-card-body">
+                <div class="form-section-label">Identity & Clearance</div>
+                <div class="field-grid">
+
+                    <div class="field-group full">
+                        <label class="field-label" asp-for="FullName">
+                            Full Name <span class="required">*</span>
+                        </label>
+                        <input class="field-input @(ViewData.ModelState["FullName"]?.Errors.Any() == true ? "error" : "")"
+                               asp-for="FullName"
+                               placeholder="e.g. Arthur Pendelton, Elara Vance…" />
+                        <div class="field-error">
+                            <i class="bi bi-exclamation-circle-fill"></i>
+                            <span asp-validation-for="FullName"></span>
+                        </div>
+                    </div>
+
+                    <div class="field-group">
+                        <label class="field-label" asp-for="Specialty">
+                            Specialty <span class="required">*</span>
+                        </label>
+                        <input class="field-input @(ViewData.ModelState["Specialty"]?.Errors.Any() == true ? "error" : "")"
+                               asp-for="Specialty"
+                               placeholder="e.g. Beast Tamer, Arcane Vet…" />
+                        <div class="field-error">
+                            <i class="bi bi-exclamation-circle-fill"></i>
+                            <span asp-validation-for="Specialty"></span>
+                        </div>
+                    </div>
+
+                    <div class="field-group">
+                        <label class="field-label" asp-for="HazardPayRate">
+                            Hazard Pay Rate ($) <span class="required">*</span>
+                        </label>
+                        <input class="field-input @(ViewData.ModelState["HazardPayRate"]?.Errors.Any() == true ? "error" : "")"
+                               asp-for="HazardPayRate"
+                               type="number" step="0.01" min="0"
+                               placeholder="e.g. 15.50" />
+                        <div class="field-error">
+                            <i class="bi bi-exclamation-circle-fill"></i>
+                            <span asp-validation-for="HazardPayRate"></span>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <div class="side-stack">
+
+            <div class="side-panel">
+                <div class="side-panel-header">
+                    <i class="bi bi-floppy-fill"></i>
+                    @(isEdit ? "Update Record" : "Save Record")
+                </div>
+                <div class="side-panel-body">
+                    <div class="publish-actions">
+                        <button type="submit" class="btn-save">
+                            <i class="bi bi-@(isEdit ? "check-lg" : "plus-lg")"></i>
+                            @(isEdit ? "Update Personnel" : "Onboard Keeper")
+                        </button>
+                        <button type="button" class="btn-cancel-back" onclick="window.location.href='/Keeper'">
+                            <i class="bi bi-x-lg"></i>
+                            Discard Changes
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            @if (isEdit)
+            {
+                <div class="side-panel">
+                    <div class="side-panel-header">
+                        <i class="bi bi-info-circle-fill"></i>
+                        Record Info
+                    </div>
+                    <div class="side-panel-body">
+                        <div class="info-list">
+                            <div class="info-row">
+                                <span class="info-key">Registry ID</span>
+                                <span class="info-val">#@Model.Id</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-key">Specialty</span>
+                                <span class="info-val">@Model.Specialty</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-key">Hazard Rate</span>
+                                <span class="info-val">$@Model.HazardPayRate</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="danger-zone">
+                    <div class="danger-header">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                        Restricted Actions
+                    </div>
+                    <div class="danger-body">
+                        <p class="danger-text">
+                            Permanently expunge <strong>@Model.FullName</strong> from the staff registry.
+                            This action cannot be undone.
+                        </p>
+                        <button type="button" class="btn-delete-danger"
+                                onclick="confirmExpunge(@Model.Id, '@Model.FullName', '/Keeper/Delete', 'This will revoke all facility access.')">
+                            <i class="bi bi-trash3-fill"></i>
+                            Expunge Record
+                        </button>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</form>
+
+<div class="modal-overlay" id="expungeModal">
+    <div class="modal-box">
+        <span class="modal-icon">☠️</span>
+        <div class="modal-title">Expunge from Registry?</div>
+        <p class="modal-text" id="expungeText"></p>
+        <div class="modal-actions">
+            <button type="button" class="btn-cancel" onclick="closeExpunge()">Cancel</button>
+            <a class="btn-confirm-delete" id="expungeLink">Expunge</a>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/crud-upsert.js"></script>
+}

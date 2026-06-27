@@ -2,7 +2,6 @@
 
 @{
     ViewData["Title"] = "Feeding Schedules";
-
     string pageTitle = "Feeding Schedules";
     string pageSubtitle = "Manage dietary requirements and keeper assignments.";
     string addLabel = "Add Schedule";
@@ -56,8 +55,8 @@
             <thead>
                 <tr>
                     <th class="center">#</th>
-                    <th class="sortable" data-col="1" data-type="num">Cryptid ID <i class="bi bi-arrow-down-up sort-icon"></i></th>
-                    <th class="sortable" data-col="2" data-type="num">Keeper ID <i class="bi bi-arrow-down-up sort-icon"></i></th>
+                    <th class="sortable" data-col="1" data-type="str">Cryptid <i class="bi bi-arrow-down-up sort-icon"></i></th>
+                    <th class="sortable" data-col="2" data-type="str">Keeper <i class="bi bi-arrow-down-up sort-icon"></i></th>
                     <th class="sortable" data-col="3" data-type="str">Dietary Items <i class="bi bi-arrow-down-up sort-icon"></i></th>
                     <th class="center">Actions</th>
                 </tr>
@@ -72,10 +71,10 @@
                     <tr data-id="@item.Id" data-name="Schedule #@item.Id">
                         <td class="col-index center">@idx</td>
                         <td>
-                            <div class="cell-primary">Cryptid #@item.CryptidId</div>
+                            <div class="cell-primary">@item.CryptidName</div>
                         </td>
                         <td>
-                            <div class="cell-primary">Keeper #@item.KeeperId</div>
+                            <div class="cell-primary">@item.KeeperName</div>
                         </td>
                         <td>
                             <div class="cell-primary">@item.DietaryItems</div>

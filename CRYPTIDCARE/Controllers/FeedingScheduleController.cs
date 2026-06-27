@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using CRYPTIDCARE.Models;
 using Dapper;
 
@@ -14,6 +15,12 @@ namespace CRYPTIDCARE.Controllers
 
         public async Task<IActionResult> Upsert(int id = 0)
         {
+            var cryptids = await Context.ListingAsync<Cryptid>("sp_Cryptid_ViewAll");
+            ViewBag.Cryptids = cryptids.Select(c => new SelectListItem { Value = c.Id.ToString(), Text = c.Nickname });
+
+            var keepers = await Context.ListingAsync<Keeper>("sp_Keeper_ViewAll");
+            ViewBag.Keepers = keepers.Select(k => new SelectListItem { Value = k.Id.ToString(), Text = k.FullName });
+
             if (id == 0)
             {
                 return View(new FeedingSchedule());

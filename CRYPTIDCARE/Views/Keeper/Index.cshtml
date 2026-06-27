@@ -1,0 +1,181 @@
+﻿@model IEnumerable<CRYPTIDCARE.Models.Keeper>
+
+@{
+    ViewData["Title"] = "Keepers";
+
+    string pageTitle = "Keeper Roster";
+    string pageSubtitle = "Manage facility personnel and hazard assignments.";
+    string addLabel = "Onboard Keeper";
+    string addUrl = "/Keeper/Upsert";
+    string entityIcon = "👤";
+}
+
+<link rel="stylesheet" href="~/css/crud-list.css" />
+
+<div class="page-header">
+    <div class="page-title-group">
+        <div class="page-title-icon">@entityIcon</div>
+        <div>
+            <h1 class="page-title">@pageTitle</h1>
+            <p class="page-subtitle">@pageSubtitle</p>
+        </div>
+    </div>
+    <a href="@addUrl" class="btn-add">
+        <i class="bi bi-plus-lg"></i>
+        @addLabel
+    </a>
+</div>
+
+<div class="table-card">
+
+    <div class="table-toolbar">
+        <div class="toolbar-left">
+            <span class="toolbar-label">Show</span>
+            <select class="show-select" id="pageSizeSelect">
+                <option value="5">5</option>
+                <option value="10">10</option>
+                <option value="15">15</option>
+                <option value="20">20</option>
+            </select>
+            <span class="toolbar-label">entries</span>
+        </div>
+        <div class="toolbar-right">
+            <button class="btn-download pdf" onclick="exportPdf()">
+                <i class="bi bi-file-earmark-pdf-fill"></i>
+                PDF
+            </button>
+            <button class="btn-download xml" onclick="exportXml()">
+                <i class="bi bi-file-earmark-code-fill"></i>
+                XML
+            </button>
+        </div>
+    </div>
+
+    <div style="overflow-x: auto;">
+        <table class="data-table" id="dataTable">
+            <thead>
+                <tr>
+                    <th class="center">#</th>
+                    <th class="sortable" data-col="1" data-type="str">Full Name <i class="bi bi-arrow-down-up sort-icon"></i></th>
+                    <th class="sortable" data-col="2" data-type="str">Specialty <i class="bi bi-arrow-down-up sort-icon"></i></th>
+                    <th class="sortable" data-col="3" data-type="num">Hazard Pay Rate <i class="bi bi-arrow-down-up sort-icon"></i></th>
+                    <th class="center">Actions</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+
+                @{
+                    int idx = 1;
+                }
+                @foreach (var item in Model)
+                {
+                    <tr data-id="@item.Id" data-name="@item.FullName">
+                        <td class="col-index center">@idx</td>
+                        <td>
+                            <div class="cell-primary">@item.FullName</div>
+                        </td>
+                        <td>
+                            <span class="species-badge" style="color: #4ecdc4; border-color: rgba(78,205,196,0.3); background: rgba(78,205,196,0.1);">@item.Specialty</span>
+                        </td>
+                        <td>
+                            <div class="cell-primary" style="color: #c84b31; font-family: 'Cinzel', serif; font-weight: 700;">$@item.HazardPayRate</div>
+                        </td>
+                        <td class="center">
+                            <div class="action-group" style="justify-content:center;">
+                                <a href="/Keeper/Upsert/@item.Id" class="btn-icon edit" title="Edit">
+                                    <i class="bi bi-pencil-fill"></i>
+                                </a>
+                                <button class="btn-icon delete" title="Delete"
+                                        onclick="confirmDelete(@item.Id, '@item.FullName', '/Keeper/Delete', 'This will remove the keeper from active duty.')">
+                                    <i class="bi bi-trash3-fill"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    idx++;
+                }
+
+                @if (!Model.Any())
+                {
+                    <tr>
+                        <td colspan="5">
+                            <div class="empty-state">
+                                <div class="empty-state-icon">👁</div>
+                                <div class="empty-state-title">No personnel found</div>
+                                <div class="empty-state-text">The facility is unstaffed. Onboard a keeper to begin operations.</div>
+                            </div>
+                        </td>
+                    </tr>
+                }
+
+            </tbody>
+        </table>
+    </div>
+
+    <div class="table-footer">
+        <div class="results-info" id="resultsInfo">
+            Showing <strong id="showingFrom">1</strong>–<strong id="showingTo">10</strong>
+            of <strong id="totalCount">@Model.Count()</strong> results
+        </div>
+        <div class="pagination" id="pagination">
+            <button class="page-btn arrow" id="btnFirst" title="First" onclick="goPage(1)">
+                <i class="bi bi-chevron-double-left"></i>
+            </button>
+            <button class="page-btn arrow" id="btnPrev" title="Previous" onclick="goPage(currentPage - 1)">
+                <i class="bi bi-chevron-left"></i>
+            </button>
+            <div id="pageNumbers" style="display:flex;gap:4px;"></div>
+            <button class="page-btn arrow" id="btnNext" title="Next" onclick="goPage(currentPage + 1)">
+                <i class="bi bi-chevron-right"></i>
+            </button>
+            <button class="page-btn arrow" id="btnLast" title="Last" onclick="goPage(totalPages)">
+                <i class="bi bi-chevron-double-right"></i>
+            </button>
+        </div>
+    </div>
+
+</div>
+
+<div class="modal-overlay" id="deleteModal">
+    <div class="modal-box">
+        <span class="modal-icon">☠️</span>
+        <div class="modal-title">Action Required</div>
+        <p class="modal-text" id="deleteModalText"></p>
+        <div class="modal-actions">
+            <button class="btn-cancel" onclick="closeDeleteModal()">Cancel</button>
+            <a class="btn-confirm-delete" id="deleteConfirmLink">Confirm</a>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/crud-list.js"></script>
+    <script>
+        function exportXml() {
+        const rows = document.querySelectorAll('#tableBody tr[data-id]');
+        let xml = '<?xml version="1.0" encoding="UTF-8"?><Keepers>';
+        rows.forEach(row => {
+        const id = row.getAttribute('data-id');
+        const name = row.getAttribute('data-name');
+        const cells = row.querySelectorAll('.cell-primary, .species-badge');
+
+        const fullName = name;
+        const specialty = cells.length > 1 ? cells[1].innerText : '';
+        const hazardRate = cells.length > 2 ? cells[2].innerText.replace('$', '') : '';
+
+        xml += `<Keeper id="${id}"><FullName>${fullName}</FullName><Specialty>${specialty}</Specialty><HazardPayRate>${hazardRate}</HazardPayRate></Keeper>`;
+        });
+        xml += '</Keepers>';
+
+        const blob = new Blob([xml], { type: 'application/xml' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'keepers.xml';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        }
+    </script>
+}
